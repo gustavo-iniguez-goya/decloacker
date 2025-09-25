@@ -172,7 +172,7 @@ func main() {
 			dlog.Error("%s\n", err)
 			ret = decloacker.ERROR
 		} else {
-			dlog.Info("OK\n")
+			dlog.Ok("OK\n")
 		}
 		// not implemented in go-diskfs
 	case "disk mv <orig> <dest>":
@@ -181,7 +181,7 @@ func main() {
 			dlog.Error("%s\n", err)
 			ret = decloacker.ERROR
 		} else {
-			dlog.Info("OK\n")
+			dlog.Ok("OK\n")
 		}
 	case "disk info <paths>":
 		list, err := disk.Info(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Info.Paths, diskfs.ReadWrite)

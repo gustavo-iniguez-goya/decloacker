@@ -212,7 +212,7 @@ func Info(dev string, partition int, paths []string, openMode diskfs.OpenModeOpt
 
 	ext4fs, ok := fs.(*ext4.FileSystem)
 	if !ok {
-		return nil, fmt.Errorf("%s is not a ext4 filesystem")
+		return nil, fmt.Errorf("%s:%d is not a ext4 filesystem", dev, partition)
 	}
 	defer ext4fs.Close()
 
@@ -220,7 +220,7 @@ func Info(dev string, partition int, paths []string, openMode diskfs.OpenModeOpt
 	for _, p := range paths {
 		stat, err := ext4fs.Stat(p)
 		if err != nil {
-			log.Error("ext4.Stat() %s", err)
+			log.Error("ext4.Stat() %s\n", err)
 			continue
 		}
 		list = append(list, stat)
