@@ -1,5 +1,12 @@
 # decloacker
-a simple tool to reveal files, directories or connections hidden by malware.
+a simple tool to reveal files, directories and connections hidden by malware.
+
+### TODO
+
+- [ ] Add a cli option to scan the system with all the IOCs options.
+- [ ] Read options from a configuration file.
+- [ ] Dump logs in json and structured text.
+- [ ] Add more options to scan for malicious lkms.
 
 ### Examples
 
