@@ -42,6 +42,9 @@ var (
 
 func CheckHiddenLKM() int {
 	tainted := CheckTainted()
+	if !tainted {
+		return OK
+	}
 	return CheckProcModules(tainted)
 }
 
@@ -51,9 +54,12 @@ func CheckTainted() bool {
 	tainted := false
 	val, _ := os.ReadFile("/proc/sys/kernel/tainted")
 	value, _ := strconv.Atoi(string(bytes.Trim(val, "\n")))
-	if value != 0 {
-		log.Detection("WARNING: kernel tainted\n")
+	if value == 0 {
+		log.Ok("kernel not tainted\n")
+		return tainted
 	}
+
+	log.Detection("WARNING: kernel tainted\n")
 	for bit, t := range taint_values {
 		mask := 1 << bit
 		if value&mask != 0 {
@@ -61,7 +67,7 @@ func CheckTainted() bool {
 			log.Log("\t(%s) %s\n", t.letter, t.reason)
 		}
 	}
-	log.Log("\n\n")
+	log.Log("\n")
 
 	return tainted
 }

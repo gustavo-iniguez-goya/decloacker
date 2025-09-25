@@ -16,6 +16,7 @@ const (
 
 const (
 	DEBUG     = slog.LevelDebug
+	OK        = slog.LevelInfo - 1
 	INFO      = slog.LevelInfo
 	WARN      = slog.LevelWarn
 	ERROR     = slog.LevelError
@@ -33,6 +34,7 @@ var (
 	}
 	logLevelTag = map[slog.Level]string{
 		DEBUG:     "[d] ",
+		OK:        "[\u2713] ",
 		INFO:      "[i] ",
 		WARN:      "[w] ",
 		ERROR:     "[e] ",
@@ -40,6 +42,7 @@ var (
 	}
 	logLevelColor = map[slog.Level]string{
 		DEBUG:     lightGray + logLevelTag[DEBUG] + reset,
+		OK:        green + logLevelTag[OK] + reset,
 		INFO:      blue + logLevelTag[INFO] + reset,
 		WARN:      yellow + logLevelTag[WARN] + reset,
 		ERROR:     blue + logLevelTag[ERROR] + reset,
@@ -106,6 +109,11 @@ func Debug(msg string, args ...any) {
 	}
 }
 
+func Ok(msg string, args ...any) {
+	if LogLevel <= INFO {
+		fmt.Fprintf(os.Stderr, logLevelColor[OK]+msg, args...)
+	}
+}
 func Info(msg string, args ...any) {
 	if LogLevel <= INFO {
 		fmt.Fprintf(os.Stderr, logLevelColor[INFO]+msg, args...)
