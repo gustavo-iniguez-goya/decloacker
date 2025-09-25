@@ -45,7 +45,7 @@ var (
 		OK:        green + logLevelTag[OK] + reset,
 		INFO:      blue + logLevelTag[INFO] + reset,
 		WARN:      yellow + logLevelTag[WARN] + reset,
-		ERROR:     blue + logLevelTag[ERROR] + reset,
+		ERROR:     red + logLevelTag[ERROR] + reset,
 		DETECTION: green + logLevelTag[DETECTION] + reset,
 	}
 )

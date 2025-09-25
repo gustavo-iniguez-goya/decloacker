@@ -37,7 +37,7 @@ func Cat(paths []string) int {
 }
 
 func Copy(orig, dest string) int {
-	log.Info("Copying file %s -> %s:\t", orig, dest)
+	log.Info("Copying file %s -> %s ...\n", orig, dest)
 
 	data, err := ioutil.ReadFile(orig)
 	if err != nil {
@@ -54,7 +54,7 @@ func Copy(orig, dest string) int {
 		log.Error("unable to copy %s: %s\n", orig, err)
 		return ERROR
 	}
-	log.Info("OK\n\n")
+	log.Ok("Ok\n\n")
 
 	return OK
 }
@@ -63,13 +63,12 @@ func Delete(paths []string) int {
 	log.Info("Deleting files %s\n", paths)
 	ret := OK
 	for _, p := range paths {
-		log.Log("\t%s:", p)
 		if err := os.Remove(p); err != nil {
-			log.Error("Error removing %s: %s\n", p, err)
+			log.Error("%s\n", err)
 			ret = ERROR
 			continue
 		}
-		log.Log("\tOK\n")
+		log.Ok("%s\n", p)
 	}
 
 	return ret
