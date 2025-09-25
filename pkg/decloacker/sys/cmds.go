@@ -51,7 +51,7 @@ func Ls(tool, dir string, args ...string) map[string]fs.FileInfo {
 	cmd := exec.Command(tool, args...)
 	out, err := cmd.Output()
 	if err != nil {
-		log.Error("walkDir()", "ERROR listing dir: %s\n\n", err)
+		log.Error("error listing files %s\n\n", dir)
 		return files
 	}
 	lastDir := dir
