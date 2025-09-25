@@ -98,12 +98,19 @@ func CheckHiddenContent(paths []string) int {
 			}
 		}
 
+		// don't mmap /proc or /dev/shm
+		if strings.HasPrefix(f, "/proc") || strings.HasPrefix(f, "/dev/shm") {
+			continue
+		}
 		mSize, mData, err := MmapFile(f)
 		if err != nil {
 			log.Warn("mmap: %s\n", err)
-		} else if !hiddenFound {
+			continue
+		}
 
-			if !strings.HasPrefix(f, "/proc") && mSize != fileSize {
+		// if we haven't found anything, try it with mmap
+		if !hiddenFound {
+			if mSize != fileSize {
 				log.Detection("\n=== CONTENT WARNING (mmap) %s ===\n", f)
 				log.Detection("size differs (content: %d, mmap.size: %d, %s)\n", fileSize, mSize, f)
 				log.Log("====================================\n")
