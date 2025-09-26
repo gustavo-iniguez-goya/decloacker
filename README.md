@@ -7,6 +7,7 @@ a simple tool to reveal files, directories and connections hidden by malware.
 - [ ] Read options from a configuration file.
 - [ ] Dump logs in json and structured text.
 - [ ] Add more options to scan for malicious lkms.
+- [ ] Compare connections listed in /proc/net/* as well as the output of netstat/ss/lsof, with the connections found in kernel.
 
 ### Examples
 
@@ -70,7 +71,7 @@ HIDDEN dirs/files found:
 	-rw-rw-r--	0	2025-09-25T16:07:16+01:00	/home/ga/rootkits/ld_preload/Father/lobster/file2.txt
 	-rw-rw-r--	0	2025-09-25T16:07:16+01:00	/home/ga/rootkits/ld_preload/Father/lobster/file3.txt
 
-[i] use decloacker disk cp <orig> <dest> to backup the files, or decloacker disk rm <path> to delete them
+[i] use decloacker cp <orig> <dest> to backup the files, or decloacker rm <path> to delete them
 
 root@localhost:~#
 ```
@@ -85,3 +86,8 @@ decloacker v0.0, pid: 765449
 	/etc/ld.so.preload:	OK
 root@locahost:~#
 ```
+
+### Resources
+
+ - [User-space library rootkits revisited: Are user-space detection mechanisms futile?](https://arxiv.org/html/2506.07827v1)
+ - [The Hidden Threat: Analysis of Linux Rootkit Techniques and Limitations of Current Detection Tools](https://dl.acm.org/doi/10.1145/3688808)
