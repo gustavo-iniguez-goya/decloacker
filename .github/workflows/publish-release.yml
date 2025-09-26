@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - "v*.*.*"
-  # Allows you to run this workflow manually from the Actions tab
+  # Allow to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 permissions:
@@ -42,5 +42,5 @@ jobs:
           draft: yes
           generate_release_notes: yes
           files: |
-            declocker*.tar.gz
+            decloacker*.tar.gz
 
