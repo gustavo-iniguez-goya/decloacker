@@ -10,15 +10,18 @@ import (
 )
 
 func CheckHiddenProcs() int {
-	log.Info("Checking hidden processes via brute force:\n\n")
+	log.Info("Checking hidden processes:\n\n")
 
 	ret := OK
 	pidMaxTmp, _ := os.ReadFile("/proc/sys/kernel/pid_max")
 	pidMax, _ := strconv.Atoi(string(bytes.Trim(pidMaxTmp, "\n")))
 	hiddenProcs := make(map[int]string)
 
-	_, expected := LsFiles("/proc", false)
-	//CompareFiles(orig, expected)
+	orig, expected := LsFiles("/proc", false)
+	ret = CompareFiles(orig, expected)
+
+	log.Info("trying with brute force (pid max: %d):\n", pidMax)
+
 	procPath := ""
 	for pid := 1; pid < pidMax; pid++ {
 		procPath = fmt.Sprint("/proc/", pid)
