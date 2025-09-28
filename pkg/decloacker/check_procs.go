@@ -4,32 +4,70 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
 )
 
+const (
+	PidName = 0
+	PidPID  = 5
+	PidPPID = 6
+)
+
+var (
+	reStatusField = regexp.MustCompile(`([A-Za-z]+):\t(.*)\n`)
+)
+
+func getPidInfo(procPath string) ([][]string, string, error) {
+	statusContent, err := os.ReadFile(procPath + "/status")
+	if err != nil {
+		return nil, "", err
+	}
+	status := reStatusField.FindAllStringSubmatch(string(statusContent), -1)
+	var exe string
+	exe, err = os.Readlink(procPath + "/exe")
+	if err != nil {
+		exe = "(unable to read process path, maybe a kernel thread)"
+	}
+
+	return status, exe, nil
+}
+
 // CheckBindMounts looks for PIDs hidden with bind mounts.
 func CheckBindMounts() int {
 	ret := OK
-	printPid := func(pid []byte) {
-		statRogue, err := os.ReadFile(fmt.Sprint(string(pid), "/stat"))
+	printPid := func(procPathB []byte) {
+		procPath := string(procPathB)
+		status, exe, err := getPidInfo(procPath)
 		if err != nil {
 			return
 		}
-		fields := bytes.Fields(statRogue)
-		overlayPid := fields[0]
-		log.Detection("\tHidden PID: %s, %s\n", pid, fields[1])
-		statOverlay, err := os.ReadFile(fmt.Sprint("/proc/", string(overlayPid), "/stat"))
+		log.Detection("\tOverlay PID:\n\t  PID: %s\n\t  PPid: %s\n\t  Comm: %s\n\t  Path: %s\n\n",
+			status[PidPID][2],
+			status[PidPPID][2],
+			status[PidName][2],
+			exe,
+		)
+
+		// TODO: umount procPath
+		err = exec.Command("umount", procPath).Run()
 		if err != nil {
-			log.Error("%s", err)
+			log.Error("unable to umount %s to unhide the PID\n", procPath)
 			return
 		}
-		fields = bytes.Fields(statOverlay)
-		if len(fields) > 1 {
-			log.Detection("\tOverlay PID: /proc/%s, %s\n", overlayPid, fields[1])
-		}
+		log.Debug("%s umounted\n", procPath)
+
+		status, exe, err = getPidInfo(procPath)
+		log.Detection("\tHIDDEN PID:\n\t  PID: %s\n\t  PPid: %s\n\t  Comm: %s\n\t  Path: %s\n\n",
+			status[PidPID][2],
+			status[PidPPID][2],
+			status[PidName][2],
+			exe,
+		)
+
 	}
 
 	mounts, err := os.ReadFile("/proc/mounts")
@@ -54,7 +92,7 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	log.Info("Checking hidden processes:\n\n")
 
 	ret := OK
-	ret = CheckBindMounts()
+	retBind := CheckBindMounts()
 
 	hiddenProcs := make(map[int]string)
 	pidMaxTmp, _ := os.ReadFile("/proc/sys/kernel/pid_max")
@@ -68,8 +106,8 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	ret = CompareFiles(orig, expected)
 
 	if !doBruteForce {
-		if len(hiddenProcs) == 0 {
-			log.Info("No hidden processes found. You can try it with \"decloacker scan hidden-procs --brute-force\"\n")
+		if len(hiddenProcs) == 0 && ret == OK && retBind == OK {
+			log.Info("No hidden processes found. You can try it with \"decloacker scan hidden-procs --brute-force\"\n\n")
 		}
 		return ret
 	}
@@ -105,8 +143,9 @@ func CheckHiddenProcs(doBruteForce bool) int {
 		log.Detection("WARNING: hidden proc? /proc/%d\n", pid)
 		log.Detection("\n\texe: %s\n\tcomm: %s\n\tcmdline: %s\n\n", exe, bytes.Trim(comm, "\n"), cmdline)
 	}
-	if len(hiddenProcs) == 0 {
-		log.Info("No hidden processes found using brute force\n")
+
+	if len(hiddenProcs) == 0 && ret == OK && retBind == OK {
+		log.Info("No hidden processes found using brute force\n\n")
 	}
 
 	return ret
