@@ -85,7 +85,7 @@ func CheckProcModules(tainted bool) int {
 	kmods, _ := os.ReadDir("/sys/module")
 	for _, k := range kmods {
 		rktPath := "/sys/module/" + k.Name() + "/taint"
-		log.Debug("checking kmod %s", rktPath)
+		log.Debug("checking kmod %s\n", rktPath)
 
 		tainted, _ := os.ReadFile(rktPath)
 		tainted = bytes.Trim(tainted, " \t\n")
