@@ -17,7 +17,8 @@ func CheckHiddenContent(paths []string) int {
 	for _, f := range paths {
 		hiddenFound := false
 		log.Info("Checking for hidden content %s\n", f)
-		catFiles := sys.Cat("cat", f)
+		fileContent := sys.Cat("cat", f)
+		fileSize := len(fileContent[f])
 
 		stat, err := os.Stat(f)
 		if err != nil {
@@ -30,26 +31,26 @@ func CheckHiddenContent(paths []string) int {
 		// XXX: skip big files?
 
 		raw, err := ioutil.ReadFile(f)
-		fileSize := int64(len(raw))
-		content := string(raw)
+		expectedSize := int64(len(raw))
+		expected := string(raw)
 		if err != nil {
 			log.Warn("%s cannot be read\n", f)
 		} else {
 			// XXX: sizes may differ if the file is a symbolic link to /proc, like /etc/mtab
-			if !strings.HasPrefix(f, "/proc") && fileSize != stat.Size() {
+			if !strings.HasPrefix(f, "/proc") && stat.Size() != expectedSize {
 				log.Detection("\n=== CONTENT WARNING (read) %s ===\n", f)
-				log.Detection("size differs (content: %d, stat.size: %d, symlink: %v), %s\n", fileSize, stat.Size(), stat.Mode(), f)
+				log.Detection("size differs (content: %d, stat.size: %d, symlink: %v), %s\n", expectedSize, stat.Size(), stat.Mode(), f)
 				log.Detection("====================================\n")
 				ret = CONTENT_HIDDEN
 			}
-			if content != catFiles[f] {
+			if expected != fileContent[f] {
 				hiddenFound = true
 
 				ret = FILES_HIDDEN
 				log.Detection("\n=== CONTENT WARNING (read) %s ===\n", f)
-				log.Detection("cat content:\n %v\n", catFiles[f])
+				log.Detection("cat content (%d bytes):\n %v\n", fileSize, fileContent[f])
 				log.Detection("-----------------------------------------------------------------\n")
-				log.Detection("Go read content:\n %s\n", content)
+				log.Detection("Go read content (%d bytes):\n %s\n", expectedSize, expected)
 				log.Detection("====================================\n")
 
 				ret = CONTENT_HIDDEN
@@ -68,19 +69,19 @@ func CheckHiddenContent(paths []string) int {
 
 		// if we haven't found anything, try it with mmap
 		if !hiddenFound {
-			if mSize != fileSize {
+			if mSize != expectedSize {
 				log.Detection("\n=== CONTENT WARNING (mmap) %s ===\n", f)
-				log.Detection("size differs (content: %d, mmap.size: %d, %s)\n", fileSize, mSize, f)
+				log.Detection("size differs (content: %d, mmap.size: %d, %s)\n", expectedSize, mSize, f)
 				log.Log("====================================\n")
 				ret = CONTENT_HIDDEN
 			}
 
-			if mData != catFiles[f] {
+			if mData != fileContent[f] {
 				ret = FILES_HIDDEN
 				log.Detection("\n=== CONTENT WARNING (mmap) %s ===\n", f)
-				log.Detection("cat content:\n %v\n", catFiles[f])
+				log.Detection("cat content (%d bytes):\n %v\n", fileSize, fileContent[f])
 				log.Detection("-----------------------------------------------------------------\n")
-				log.Detection("Go mmap content:\n %s\n", content)
+				log.Detection("Go mmap content (%d bytes):\n %s\n", len(mData), mData)
 				log.Detection("====================================\n")
 				ret = CONTENT_HIDDEN
 			}
