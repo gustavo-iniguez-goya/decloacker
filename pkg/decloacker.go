@@ -129,7 +129,7 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 		path = resetRootPath(path)
 		fs.WalkDir(root, ".", func(path2 string, d fs.DirEntry, err error) error {
 			if err != nil {
-				log.Error("walkdir err:", err)
+				log.Error("error reading path %s: %s\n", path2, err)
 				return nil
 			}
 			if path2 == "." || path2 == ".." {
