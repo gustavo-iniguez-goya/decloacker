@@ -10,9 +10,8 @@ tl;dr: `./bin/decloacker --help`
 
 There're 4 main areas:
 
- - cat, list, move, delete or copy files without the libc.
-   
-   Useful for LD_PRELOAD based rootkits.
+cat, list, move, delete or copy files without the libc.
+  - Useful for LD_PRELOAD based rootkits.
 
 ```bash
   cp [<orig> [<dest>]] [flags]
@@ -31,9 +30,8 @@ There're 4 main areas:
     Cat files via syscalls.
 ```
 
- - list, copy or get info of directories and files by accessing directly the disk device.
-   
-   These options help to manipulate files or directories hidden by some kernel rootkits (like Diamorphine).
+List, copy or get info of directories and files by accessing directly the disk device (only ext4 filesystems).
+  - These options help to manipulate files or directories hidden by some kernel rootkits (like Diamorphine).
 
 ```bash
   disk ls --dev=STRING <paths> ... [flags]
@@ -46,7 +44,7 @@ There're 4 main areas:
     Return information about a path
 ```
 
- - execute actions to unhide files, directories, processes or kernel rootkits
+Execute actions to unhide files, directories, processes or kernel rootkits.
    
 ```bash
   scan hidden-files <paths> ... [flags]
@@ -62,6 +60,15 @@ There're 4 main areas:
     Look for hidden processes.
 ```
 
+Dump connections directly from the kernel, without parsing /proc/net/*:
+
+```bash
+  netstat [<protos> ...] [flags]
+    List connections from kernel via netlink.
+
+  conntrack list
+    Dump conntrack connections table from kernel.
+```
 
 
 ### TODO
