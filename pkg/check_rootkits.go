@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
 
 type taintT struct {

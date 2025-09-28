@@ -11,8 +11,8 @@ import (
 	//"time"
 
 	//"github.com/gustavo-iniguez-goya/decloacker"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/sys"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
 )
 
 // common functions to list or read files/directories by using Go's standard library

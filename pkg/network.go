@@ -6,7 +6,7 @@ import (
 	"syscall"
 
 	"github.com/evilsocket/opensnitch/daemon/netlink"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 
 	ntl "github.com/vishvananda/netlink"
 )

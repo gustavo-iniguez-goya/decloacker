@@ -7,10 +7,10 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/diskfs/go-diskfs"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker"
-	disk "github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/disk"
-	dlog "github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/sys"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg"
+	disk "github.com/gustavo-iniguez-goya/decloacker/pkg/disk"
+	dlog "github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
 )
 
 // CLI defines the full command structure.

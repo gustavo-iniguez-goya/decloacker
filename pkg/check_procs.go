@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
 
 var (
@@ -29,7 +29,7 @@ func parseLsLine(lastDir, line string) (string, string) {
 
 	pth := strings.Trim(line, " \t")
 	// new directory:
-	// /tmp/decloacker/pkg/decloacker/disk:
+	// /tmp/decloacker/pkg/disk:
 	// disk.go
 	// files and directories may end with ":", so we need to check that i starts with "/"
 	if strings.HasPrefix(pth, "/") && strings.HasSuffix(pth, ":") {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
 
 // CompareFiles checks if 2 directories have the same number of files

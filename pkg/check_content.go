@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
-	sys "github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/sys"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	sys "github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
 )
 
 // XXX: a file may have changed when reading it with cat and later with syscalls.
