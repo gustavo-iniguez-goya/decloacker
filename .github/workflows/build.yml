@@ -2,11 +2,13 @@ name: Build status
 on:
   push:
     paths:
-      - '*'
+      - '*.go'
+      - 'pkg/*'
       - '.github/workflows/build.yml'
   pull_request:
     paths:
-      - '*'
+      - '*.go'
+      - 'pkg/*'
       - '.github/workflows/build.yml'
 
   # Allows you to run this workflow manually from the Actions tab
