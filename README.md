@@ -81,7 +81,8 @@ There're 4 main areas:
 
 https://github.com/mav8557/Father
 
-* revealing hidden content (this malware hides `/etc/ld.so.preload`):
+Revealing hidden content (this malware hides `/etc/ld.so.preload`):
+
 ```bash
 root@localhost:~# echo /lib/selinux.so.3 > /etc/ld.so.preload
 root@localhost:~# cat /etc/ld.so.preload
@@ -106,7 +107,7 @@ Go read content:
 root@localhost:~#
 ```
 
-* unmasking hidden files/directories (by default, anything with "lobster" in the name):
+Unmasking hidden files/directories (by default, anything with "lobster" in the name):
 
 ```bash
 root@localhost:~# ls /home/ga/rootkits/ld_preload/Father/*lobster*
@@ -152,6 +153,128 @@ decloacker v0.0, pid: 765449
 	/etc/ld.so.preload:	OK
 root@locahost:~#
 ```
+
+#### Diamorphine (kernel rootkit)
+
+By default, it hides files or directories with "diamorphine_secret" in the name:
+
+```bash
+root@localhost:~# ls /home/ga/Diamorphine/
+diamorphine.c	diamorphine.mod    diamorphine.o	   LICENSE.txt	  Module.symvers
+diamorphine.h	diamorphine.mod.c  ***diamorphine_secret***	   Makefile	  README.md
+diamorphine.ko	diamorphine.mod.o  ***diamorphine_secret.txt***  modules.order
+root@localhost:~#
+```
+
+It can also hide processes, by sending them the signal `-31`. We'll hide these processes later:
+
+```bash
+
+root@localhost:~# sleep 99999 &
+[1] 1093
+root@localhost:~# sleep 99999 &
+[1] 1094
+root@localhost:~# pgrep sleep
+1093
+1094
+root@localhost:~#
+```
+
+Load the rootkit, and verify that the files and directories with "diamorphine_secret" are gone:
+
+```bash
+root@localhost:~# insmod /home/ga/Diamorphine/diamorphine.ko 
+```
+
+```bash
+root@localhost:~# ls /home/ga/Diamorphine/
+diamorphine.c  diamorphine.ko	diamorphine.mod.c  diamorphine.o  Makefile	 Module.symvers
+diamorphine.h  diamorphine.mod	diamorphine.mod.o  LICENSE.txt	  modules.order  README.md
+root@localhost:~#
+```
+
+Try to list the files with decloacker `disk ls` tool:
+
+```bash
+root@localhost:~# /home/ga/decloacker --log-level detection disk ls -d /dev/sda1 /home/ga/Diamorphine/
+
+HIDDEN dirs/files found:
+
+	----------	0	2025-09-25T11:53:45+01:00	/home/ga/Diamorphine/diamorphine_secret.txt
+	----------	4096	2025-09-25T11:53:51+01:00	/home/ga/Diamorphine/diamorphine_secret
+	----------	0	2025-09-25T11:53:51+01:00	/home/ga/Diamorphine/diamorphine_secret/file_hidden.txt
+root@localhost:~#
+```
+
+Now we'll hide the processes:
+
+```bash
+root@localhost:~# kill -31 1093
+root@localhost:~# kill -31 1094
+root@localhost:~# pgrep -a sleep
+root@localhost:~# 
+root@localhost:~# ls /proc/|grep 2374
+root@localhost:~# ls /proc/|grep 756572
+root@localhost:~#
+```
+
+Let's try to unhide these processes:
+
+```bash
+root@localhost:~# /home/ga/decloacker scan hidden-procs
+decloacker v0.0, pid: 763693
+
+[i] Checking hidden processes:
+
+(...)
+
+[i] 	files checked (140/139)
+[i] 	no hidden dirs/files found
+
+[i] trying with brute force (pid max: 4194304):
+WARNING: hidden proc? /proc/1093
+
+	exe: /usr/bin/sleep
+	comm: sleep
+	cmdline: sleep99999
+
+WARNING: hidden proc? /proc/1094
+
+	exe: /usr/bin/sleep
+	comm: sleep
+	cmdline: sleep99999
+
+root@localhost:~#
+```
+
+This rootkit also hides itself from the system:
+
+```bash
+root@localhost:~# grep diamorphine /proc/modules
+root@localhost:~#
+```
+
+See if we can reveal it:
+
+```bash
+root@localhost:~# /home/ga/decloacker scan hidden-lkms
+decloacker v0.0, pid: 763715
+
+[i] Checking kernel integrity
+WARNING: kernel tainted
+	(E) unsigned module loaded on a kernel that supports module signatures
+	(O) externally-built ('out-of-tree') module was loaded
+
+
+[i] Checking loaded kernel modules
+tainted: d diamorphine/, OE
+
+	WARNING: "diamorphine" kmod HIDDEN from /proc/modules
+
+root@localhost:~# 
+```
+
+You can also use `decloacker disk --dev=/dev/sda1 cp /path/to/hidden_file.txt hidden_file_backup.txt` (only for ext4 filesystems).
 
 ### Resources
 
