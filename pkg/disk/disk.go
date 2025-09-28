@@ -1,6 +1,7 @@
 package decloacker
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -102,7 +103,7 @@ func Cp(dev string, partition int, orig, dest string, openMode diskfs.OpenModeOp
 
 	ext4fs, ok := fs.(*ext4.FileSystem)
 	if !ok {
-		return fmt.Errorf("%s is not a ext4 filesystem")
+		return fmt.Errorf("%s, partition %d, is not a ext4 filesystem", dev, partition)
 	}
 	defer ext4fs.Close()
 
@@ -142,7 +143,7 @@ func Mv(dev string, partition int, orig, dest string, openMode diskfs.OpenModeOp
 
 	ext4fs, ok := fs.(*ext4.FileSystem)
 	if !ok {
-		return fmt.Errorf("%s is not a ext4 filesystem")
+		return fmt.Errorf("%s, partition %d, is not a ext4 filesystem", dev, partition)
 	}
 	defer ext4fs.Close()
 
@@ -173,7 +174,7 @@ func Rm(dev string, partition int, paths []string, openMode diskfs.OpenModeOptio
 
 	ext4fs, ok := fs.(*ext4.FileSystem)
 	if !ok {
-		return fmt.Errorf("%s is not a ext4 filesystem")
+		return fmt.Errorf("%s, partition %d, is not a ext4 filesystem", dev, partition)
 	}
 	defer ext4fs.Close()
 
@@ -227,4 +228,44 @@ func Info(dev string, partition int, paths []string, openMode diskfs.OpenModeOpt
 	}
 
 	return list, nil
+}
+
+func ReadFile(dev string, partition int, path string) ([]byte, error) {
+	disk, err := diskfs.Open(
+		dev,
+		diskfs.WithOpenMode(diskfs.ReadOnly),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read disk, %s", err)
+	}
+	defer disk.Close()
+
+	fs, err := disk.GetFilesystem(partition)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read disk partition %s, %d, %s", dev, partition, err)
+	}
+
+	ext4fs, ok := fs.(*ext4.FileSystem)
+	if !ok {
+		return nil, fmt.Errorf("%s:%d is not a ext4 filesystem", dev, partition)
+	}
+	defer ext4fs.Close()
+
+	fd, err := ext4fs.OpenFile(path, os.O_RDONLY)
+	if err != nil {
+		return nil, fmt.Errorf("ext4.Open() %s\n", err)
+	}
+	defer fd.Close()
+
+	scanner := bufio.NewReader(fd)
+	content := []byte{}
+	for {
+		line, err := scanner.ReadBytes('\n')
+		if err != nil || err == io.EOF {
+			break
+		}
+		content = append(content, line...)
+	}
+
+	return content, nil
 }

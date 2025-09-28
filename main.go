@@ -82,6 +82,9 @@ var CLI struct {
 		Info struct {
 			Paths []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
 		} `cmd:"" help:"Return information about a path"`
+		Cat struct {
+			Path string `arg:"" help:"File path to read." required:"" name:"path" type:"path"`
+		} `cmd:"" help:"Reads the content of a file and prints it to stdout"`
 	} `cmd:"" help:"Read files directly from the disk device."`
 
 	Scan struct {
@@ -199,6 +202,17 @@ func main() {
 				dlog.Log("%s\t%d\t%s\t%s\n", file.Mode(), file.Size(), file.ModTime().Format(time.RFC3339), file.Name())
 			}
 		}
+
+	case "disk cat <path>":
+		content, err := disk.ReadFile(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Cat.Path)
+		if err != nil {
+			dlog.Error("%s\n", err)
+			ret = decloacker.ERROR
+		} else {
+			dlog.Info("cat %s:\n\n", CLI.Disk.Cat.Path)
+			dlog.Detection("%s\n", content)
+		}
+
 	case "disk rm <paths>":
 		err := disk.Rm(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Rm.Paths, diskfs.ReadWrite)
 		if err != nil {
