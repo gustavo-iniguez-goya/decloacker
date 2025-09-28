@@ -16,7 +16,7 @@ import (
 
 // functions to read files directly from the disk device.
 
-func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOption) map[string]os.FileInfo {
+func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOption, recursive bool) map[string]os.FileInfo {
 	if path[len(path)-1] == '/' {
 		path = path[0 : len(path)-1]
 	}
@@ -44,6 +44,20 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 		return list
 	}
 	defer ext4fs.Close()
+
+	if !recursive {
+		entries, err := ext4fs.ReadDir(path)
+		if err != nil {
+			return list
+		}
+		for _, e := range entries {
+			if e.Name() == "." || e.Name() == ".." {
+				continue
+			}
+			list[path+"/"+e.Name()] = e
+		}
+		return list
+	}
 
 	WalkPath(ext4fs, path, "",
 		func(dir string, entries []os.FileInfo) {

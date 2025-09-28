@@ -64,7 +64,8 @@ var CLI struct {
 		Dev       string `short:"d" help:"Disk device to read (/dev/sda1, ...)" required:"" name:"dev"`
 		Partition int    `short:"p" help:"Device partition to read (0, 1, 5, ...)" name:"partition"`
 		Ls        struct {
-			Paths []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
+			Paths     []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
+			Recursive bool     `short:"r" help:"Enable deep scanning."`
 		} `cmd:"" help:"List directories and files by reading directly from the disk device"`
 		Cp struct {
 			Orig string `arg:"" help:"Origin file to copy." required:"" name:"orig" type:"path"`
@@ -172,8 +173,8 @@ func main() {
 		decloacker.Conntrack()
 
 	case "disk ls <paths>":
-		orig, expected := decloacker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, true)
-		expected = disk.ReadDir(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Ls.Paths[0], diskfs.ReadOnly)
+		orig, expected := decloacker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, CLI.Disk.Ls.Recursive)
+		expected = disk.ReadDir(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Ls.Paths[0], diskfs.ReadOnly, CLI.Disk.Ls.Recursive)
 		ret = decloacker.CompareFiles(orig, expected)
 	case "disk cp <orig> <dest>":
 		err := disk.Cp(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Cp.Orig, CLI.Disk.Cp.Dest, diskfs.ReadOnly)
