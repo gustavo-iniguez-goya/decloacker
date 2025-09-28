@@ -11,44 +11,46 @@ import (
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
 )
 
-// functions to execute system commands like ps, ls, netstat, ... to obtain info
+var (
+	CmdFind = "find"
+	CmdLs   = "ls"
+)
+
+// functions to execute system commands like ps, find, ls, netstat, ... to obtain info
 // from the system, and compare it against possible hidden data.
 
+// parseLsLine parses the output of ls -A -R /path:
+// /path:
+// file1 file2 file3
 func parseLsLine(lastDir, line string) (string, string) {
-	file := ""
-	pth := strings.Trim(line, " \t")
-	if pth == "" || pth == "." || pth == ".." {
+	if line == "" {
 		return lastDir, ""
 	}
-	if strings.HasSuffix(pth, ":") {
+
+	pth := strings.Trim(line, " \t")
+	// new directory:
+	// /tmp/decloacker/pkg/decloacker/disk:
+	// disk.go
+	// files and directories may end with ":", so we need to check that i starts with "/"
+	if strings.HasPrefix(pth, "/") && strings.HasSuffix(pth, ":") {
 		pth = pth[0 : len(pth)-1]
+		return pth, pth
 	}
-	if strings.HasSuffix(pth, "/") {
-		pth = pth[0 : len(pth)-1]
-	}
-	if strings.HasPrefix(pth, "/") {
-		lastDir = pth
+	file := path.Base(pth)
+	pth = file
+	if lastDir == "/" {
+		pth = lastDir + pth
 	} else {
-		file = path.Base(pth)
-		if file == "." || file == ".." {
-			return lastDir, ""
-		}
-		pth = file
 		pth = lastDir + "/" + pth
 	}
 	return lastDir, pth
 }
 
 // Ls uses the system "ls" command to list the files of directories.
-// find /tmp -type d
 // ls /tmp -R -a
-func Ls(tool, dir string, args ...string) map[string]fs.FileInfo {
+func Ls(dir string, args ...string) map[string]fs.FileInfo {
 	files := make(map[string]fs.FileInfo)
-	if dir[len(dir)-1] == '/' {
-		dir = dir[0 : len(dir)-1]
-	}
-
-	cmd := exec.Command(tool, args...)
+	cmd := exec.Command(CmdLs, args...)
 	out, err := cmd.Output()
 	if err != nil {
 		log.Error("error listing files %s\n\n", dir)
@@ -56,7 +58,8 @@ func Ls(tool, dir string, args ...string) map[string]fs.FileInfo {
 	}
 	lastDir := dir
 	pth := ""
-	for _, line := range strings.Split(string(out), "\n") {
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
 		lastDir, pth = parseLsLine(lastDir, line)
 		if pth == "" {
 			continue
@@ -64,6 +67,31 @@ func Ls(tool, dir string, args ...string) map[string]fs.FileInfo {
 		fi, _ := os.Lstat(pth)
 		files[pth] = fi
 	}
+	delete(files, dir)
+
+	return files
+}
+
+// Find uses the command "find" to find files and directories
+func Find(dir string, args ...string) map[string]fs.FileInfo {
+	files := make(map[string]fs.FileInfo)
+
+	cmd := exec.Command(CmdFind, args...)
+	out, err := cmd.Output()
+	if err != nil {
+		log.Error("error listing files %s\n\n", dir)
+		return files
+	}
+	lines := strings.Split(string(out), "\n")
+	idx := len(lines) - 1
+	// the last line of "find" adds a '\n', so when splitting the output by newline,
+	// it always adds an empty line.
+	lines = append(lines[:idx], lines[idx+1:]...)
+	for _, line := range lines {
+		fi, _ := os.Lstat(line)
+		files[line] = fi
+	}
+	delete(files, dir)
 
 	return files
 }

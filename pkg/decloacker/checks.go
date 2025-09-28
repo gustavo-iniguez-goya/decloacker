@@ -34,7 +34,8 @@ func CompareFiles(orig, expected map[string]os.FileInfo) int {
 		}
 	}
 
-	// we should not have more files than what ls returns
+	// we should not have more files than what ls returns.
+	// when scanning /proc, there can be transitional pids though.
 	if len(orig) > len(expected) {
 		for file, statSrc := range orig {
 			if _, found := expected[file]; !found {
@@ -46,12 +47,9 @@ func CompareFiles(orig, expected map[string]os.FileInfo) int {
 						file)
 					continue
 				}
-				log.Log("Debug %s\n", file)
 			}
 		}
 	}
-
-	log.Info("%d/%d files\n\n", len(orig), len(expected))
 
 	ret := OK
 
@@ -80,14 +78,12 @@ func CompareFiles(orig, expected map[string]os.FileInfo) int {
 
 // CheckHiddenFiles checks differences between the ls output and the output of
 // Go's standard lib.
-func CheckHiddenFiles(paths []string, deep bool) int {
+func CheckHiddenFiles(paths []string, tool string, deep bool) int {
 	ret := OK
-	log.Info("Checking hidden files %q\n\n", paths)
-
-	ret = CheckBindMounts()
+	log.Info("Checking hidden files with \"%s\" %q\n\n", tool, paths)
 
 	for _, p := range paths {
-		orig, expected := LsFiles(p, deep)
+		orig, expected := ListFiles(p, tool, deep)
 		r := CompareFiles(orig, expected)
 
 		if r != OK {

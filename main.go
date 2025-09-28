@@ -10,6 +10,7 @@ import (
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker"
 	disk "github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/disk"
 	dlog "github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/sys"
 )
 
 // CLI defines the full command structure.
@@ -86,6 +87,7 @@ var CLI struct {
 	Scan struct {
 		HiddenFiles struct {
 			Paths     []string `arg:"" help:"Paths to scan. Use /proc to analyze processes." required:"" name:"paths" type:"path"`
+			Tool      string   `short:"t" optional:"" enum:"ls,find" default:"find" help:"System command to enumerate files and directories: ls, find."`
 			Recursive bool     `short:"r" help:"Enable deep scanning."`
 		} `cmd:"" help:"Look for hidden files, directories or processes (libc vs Go's std lib vs mmap)."`
 		HiddenContent struct {
@@ -94,6 +96,7 @@ var CLI struct {
 		HiddenLkms struct {
 		} `cmd:"" help:"Look for hidden kernel modules."`
 		HiddenProcs struct {
+			BruteForce bool `short:"b" help:"Try to find processes via brute force."`
 		} `cmd:"" help:"Look for hidden processes."`
 
 		// TODO
@@ -144,10 +147,13 @@ func main() {
 		ret = decloacker.Delete(CLI.Rm.Paths)
 	case "ls <paths>":
 		for _, p := range CLI.Ls.Paths {
-			_, ls := decloacker.LsFiles(p, CLI.Ls.Recursive)
+			_, ls := decloacker.ListFiles(p, sys.CmdLs, CLI.Ls.Recursive)
+			total := len(ls)
 			for f, stat := range ls {
 				dlog.Log("\t%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
 			}
+			dlog.Log("\n")
+			dlog.Info("%d files scanned\n\n", total)
 		}
 	case "mv <orig> <dest>":
 		ret = decloacker.Rename(CLI.Mv.Orig, CLI.Mv.Dest)
@@ -163,7 +169,7 @@ func main() {
 		decloacker.Conntrack()
 
 	case "disk ls <paths>":
-		orig, expected := decloacker.LsFiles(CLI.Disk.Ls.Paths[0], true)
+		orig, expected := decloacker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, true)
 		expected = disk.ReadDir(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Ls.Paths[0], diskfs.ReadOnly)
 		ret = decloacker.CompareFiles(orig, expected)
 	case "disk cp <orig> <dest>":
@@ -201,13 +207,13 @@ func main() {
 		}
 
 	case "scan hidden-files <paths>":
-		ret = decloacker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Recursive)
+		ret = decloacker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Tool, CLI.Scan.HiddenFiles.Recursive)
 	case "scan hidden-content <paths>":
 		ret = decloacker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
 	case "scan hidden-lkms":
 		ret = decloacker.CheckHiddenLKM()
 	case "scan hidden-procs":
-		ret = decloacker.CheckHiddenProcs()
+		ret = decloacker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
 	//case "scan all":
 	//	checkAll(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Recursive)
 

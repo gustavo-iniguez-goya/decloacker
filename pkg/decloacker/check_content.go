@@ -1,55 +1,13 @@
 package decloacker
 
 import (
-	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/log"
 	sys "github.com/gustavo-iniguez-goya/decloacker/pkg/decloacker/sys"
 )
-
-func CheckBindMounts() int {
-	ret := OK
-	printPid := func(pid []byte) {
-		statRogue, err := os.ReadFile(fmt.Sprint(string(pid), "/stat"))
-		if err != nil {
-			return
-		}
-		fields := bytes.Fields(statRogue)
-		overlayPid := fields[0]
-		log.Detection("\tHidden PID: %s, %s\n", pid, fields[1])
-		statOverlay, err := os.ReadFile(fmt.Sprint("/proc/", string(overlayPid), "/stat"))
-		if err != nil {
-			log.Error("%s", err)
-			return
-		}
-		fields = bytes.Fields(statOverlay)
-		if len(fields) > 1 {
-			log.Detection("\tOverlay PID: /proc/%s, %s\n", overlayPid, fields[1])
-		}
-	}
-
-	mounts, err := os.ReadFile("/proc/mounts")
-	if err != nil {
-		log.Error("mounted pid: %s", err)
-	} else {
-		mountsRe := regexp.MustCompile(`\/proc\/[0-9]+`)
-		if matches := mountsRe.FindAll(mounts, -1); matches != nil {
-			ret = PID_BIND_MOUNT
-			for n, m := range matches {
-				log.Detection("%d - WARNING, pid hidden under another pid (mount): %s\n", n, m)
-				printPid(m)
-			}
-			log.Log("\n")
-		}
-	}
-
-	return ret
-}
 
 // XXX: a file may have changed when reading it with cat and later with syscalls.
 func CheckHiddenContent(paths []string) int {

@@ -126,6 +126,7 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 
 	if recursive {
 		root := os.DirFS(path)
+		path = resetRootPath(path)
 		fs.WalkDir(root, ".", func(path2 string, d fs.DirEntry, err error) error {
 			if err != nil {
 				log.Error("walkdir err:", err)
@@ -144,30 +145,40 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 	}
 
 	entries, _ := os.ReadDir(path)
+	path = resetRootPath(path)
 	for _, entry := range entries {
 		inf, _ := entry.Info()
-		//Debug("readDir() %s\n", path+"/"+entry.Name())
+		//log.Debug("readDir() %s\n", path+"/"+entry.Name())
 		list[path+"/"+entry.Name()] = inf
 	}
 	return list
 }
 
-func LsFiles(path string, deep bool) (map[string]os.FileInfo, map[string]os.FileInfo) {
-	cmd := "ls"
+// ListFiles returns a list of files and directories using a system command like
+// ls or find, and using Go's functions.
+func ListFiles(path string, tool string, deep bool) (map[string]os.FileInfo, map[string]os.FileInfo) {
+	path = stripLastSlash(path)
+
 	args := []string{path}
-	args = append(args, []string{"-a"}...)
-	if deep {
-		log.Debug("Recursive scanning enabled\n\n")
-		args = append(args, []string{"-R"}...)
+	if !deep {
+		args = append(args, []string{"-maxdepth", "1"}...)
+	}
+	if tool == sys.CmdLs {
+		args = []string{path, "-A"} //, "--format=single-column"}
+		if deep {
+			args = append(args, []string{"-R"}...)
+		}
 	}
 
-	lsDirs := sys.Ls(cmd, path, args...)
-	list := make(map[string]fs.FileInfo)
-
-	if path[len(path)-1] == '/' {
-		path = path[0 : len(path)-1]
+	log.Debug("Listing files with system commands ... \n")
+	lsDirs := make(map[string]fs.FileInfo)
+	if tool == sys.CmdLs {
+		lsDirs = sys.Ls(path, args...)
+	} else {
+		lsDirs = sys.Find(path, args...)
 	}
-	list = ReadDir(path, deep)
+	log.Debug("Listing files with decloacker ... \n")
+	list := ReadDir(path, deep)
 
 	return lsDirs, list
 }
