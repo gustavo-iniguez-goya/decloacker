@@ -1,5 +1,8 @@
 # decloacker
-a simple tool to reveal files, directories and connections hidden by malware.
+
+<p align="center">a simple tool to reveal files, directories and connections hidden by malware.</p>
+
+<p align="center">•• <a href="#usage">Usage</a> • <a href="#malware-analysis-examples">Malware analysis examples</a> • <a href="#todo">TODO</a> • <a href="#resources">Resources</a> ••</p>
 
 ### Usage
 
@@ -68,9 +71,11 @@ There're 4 main areas:
 - [ ] Dump logs in json and structured text.
 - [ ] Add more options to scan for malicious lkms.
 - [ ] Compare connections listed in /proc/net/* as well as the output of netstat/ss/lsof, with the connections found in kernel.
+- [ ] Display the differences when scanning with `scan hidden-content`.
 - [ ] Display what processes opened the existing sockets.
+- [ ] Scan eBPF modules.
 
-### Examples
+### Malware analysis examples
 
 #### Father (LD_PRELOAD rootkit)
 
@@ -153,4 +158,5 @@ root@locahost:~#
  - [User-space library rootkits revisited: Are user-space detection mechanisms futile?](https://arxiv.org/html/2506.07827v1)
  - [The Hidden Threat: Analysis of Linux Rootkit Techniques and Limitations of Current Detection Tools](https://dl.acm.org/doi/10.1145/3688808)
  - [Hiding Linux Processes with Bind Mounts](https://righteousit.com/2024/07/24/hiding-linux-processes-with-bind-mounts/)
-
+ - [Linux rootkits explained – Part 1: Dynamic linker hijacking](https://www.wiz.io/blog/linux-rootkits-explained-part-1-dynamic-linker-hijacking)
+ - [Linux rootkits explained – Part 2: Loadable kernel modules](https://www.wiz.io/blog/linux-rootkits-explained-part-2-loadable-kernel-modules#detecting-lkm-rootkits-85)
