@@ -31,7 +31,12 @@ cat, list, move, delete or copy files without the libc.
 ```
 
 List, copy or get info of directories and files by accessing directly the disk device (only ext4 filesystems).
-  - These options help to manipulate files or directories hidden by some kernel rootkits (like Diamorphine).
+
+   - These options help to manipulate files or directories hidden by some kernel rootkits (like Diamorphine).
+   - NOTE: only available for ext4 filesystems.
+   - NOTE: this feature does not work on tmpfs, so if /tmp is mounted on tmpfs, it won't find hidden files/directories.
+     it'll work for LD_PRELOAD rootkits, and some kernel rootkits.
+
 
 ```bash
   disk ls --dev=STRING <paths> ... [flags]
@@ -290,3 +295,4 @@ You can also use `decloacker disk --dev=/dev/sda1 cp /path/to/hidden_file.txt hi
  - [Hiding Linux Processes with Bind Mounts](https://righteousit.com/2024/07/24/hiding-linux-processes-with-bind-mounts/)
  - [Linux rootkits explained – Part 1: Dynamic linker hijacking](https://www.wiz.io/blog/linux-rootkits-explained-part-1-dynamic-linker-hijacking)
  - [Linux rootkits explained – Part 2: Loadable kernel modules](https://www.wiz.io/blog/linux-rootkits-explained-part-2-loadable-kernel-modules#detecting-lkm-rootkits-85)
+ - [In-Depth Study of Linux Rootkits: Evolution, Detection, and Defense](https://www.first.org/resources/papers/amsterdam25/FIRST_Amsterdam_2025_Linux_Rootkits.pdf)
