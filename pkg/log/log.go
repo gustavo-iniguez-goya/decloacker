@@ -46,7 +46,7 @@ var (
 		INFO:      blue + logLevelTag[INFO] + reset,
 		WARN:      yellow + logLevelTag[WARN] + reset,
 		ERROR:     red + logLevelTag[ERROR] + reset,
-		DETECTION: green + logLevelTag[DETECTION] + reset,
+		DETECTION: logLevelTag[DETECTION],
 	}
 )
 
@@ -100,7 +100,7 @@ func Log(msg string, args ...any) {
 }
 
 func Separator() {
-	Log("---------------------------------------8<---------------------------------------\n")
+	fmt.Fprintf(os.Stderr, "---------------------------------------8<---------------------------------------\n")
 }
 
 func Debug(msg string, args ...any) {

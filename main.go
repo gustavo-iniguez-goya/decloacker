@@ -137,7 +137,7 @@ func main() {
 	dlog.NewLogger(CLI.Format)
 	dlog.SetLogLevel(CLI.LogLevel)
 
-	dlog.Log("decloacker v0.0, pid: %d\n\n", os.Getpid())
+	fmt.Fprintf(os.Stderr, "decloacker v0.0, pid: %d\n\n", os.Getpid())
 	var ldLib = os.Getenv("LD_LIBRARY_PRELOAD")
 	if ldLib != "" {
 		dlog.Detection("\tWARNING!!\nLD_LIBRARY_PRELOAD env var found: %s\n", ldLib)
@@ -208,8 +208,9 @@ func main() {
 			dlog.Error("%s\n", err)
 			ret = decloacker.ERROR
 		} else {
-			dlog.Info("cat %s:\n\n", CLI.Disk.Cat.Path)
-			dlog.Detection("%s\n", content)
+			dlog.Ok("cat %s:\n\n", CLI.Disk.Cat.Path)
+			dlog.Detection("%s", content)
+			dlog.Log("\n")
 		}
 
 	case "disk rm <paths>":
@@ -217,6 +218,8 @@ func main() {
 		if err != nil {
 			dlog.Error("%s\n", err)
 			ret = decloacker.ERROR
+		} else {
+			dlog.Ok("rm %v\n\n", CLI.Disk.Rm.Paths)
 		}
 
 	case "scan hidden-files <paths>":

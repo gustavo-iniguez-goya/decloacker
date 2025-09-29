@@ -41,7 +41,7 @@ func Cat(paths []string) int {
 			continue
 		}
 		log.Info("%s:\n\n", p)
-		log.Log("%s", content)
+		log.Detection("%s", content)
 		log.Separator()
 	}
 	log.Log("\n")
