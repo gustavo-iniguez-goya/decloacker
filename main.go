@@ -39,8 +39,9 @@ var CLI struct {
 		Paths []string `arg:"" required:"" name:"paths" help:"Paths to delete." type:"path"`
 	} `cmd:"" help:"Delete files via syscalls."`
 	Ls struct {
-		Paths     []string `arg:"" optional:"" name:"paths" help:"Paths to list." type:"path"`
-		Recursive bool     `short:"r" help:"Enable deep scanning."`
+		Paths            []string `arg:"" optional:"" name:"paths" help:"Paths to list." type:"path"`
+		Recursive        bool     `short:"r" help:"Enable deep scanning."`
+		ShowExtendedInfo bool     `help:"show extended information"`
 	} `cmd:"" help:"List files via syscalls."`
 	Mv struct {
 		Orig string `arg:"" optional:"" name:"orig" help:"Source path" type:"path"`
@@ -153,21 +154,13 @@ func main() {
 	case "rm <paths>":
 		ret = decloacker.Delete(CLI.Rm.Paths)
 	case "ls <paths>":
-		for _, p := range CLI.Ls.Paths {
-			_, ls := decloacker.ListFiles(p, sys.CmdLs, CLI.Ls.Recursive)
-			total := len(ls)
-			for f, stat := range ls {
-				dlog.Log("\t%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
-			}
-			dlog.Log("\n")
-			dlog.Info("%d files scanned\n\n", total)
-		}
+		printLs(CLI.Ls.ShowExtendedInfo)
 	case "mv <orig> <dest>":
 		ret = decloacker.Rename(CLI.Mv.Orig, CLI.Mv.Dest)
 	case "cat <paths>":
 		ret = decloacker.Cat(CLI.Cat.Paths)
 	case "stat <paths>":
-		ret = decloacker.Stat(CLI.Stat.Paths)
+		printStat()
 
 	case "netstat <protos>":
 		ret = decloacker.Netstat(CLI.Netstat.Protos)
@@ -249,6 +242,41 @@ func main() {
 		ret = decloacker.ERROR
 	}
 	os.Exit(ret)
+}
+
+func printLs(showExtendedInfo bool) {
+	for _, p := range CLI.Ls.Paths {
+		_, ls := decloacker.ListFiles(p, sys.CmdLs, CLI.Ls.Recursive)
+		total := len(ls)
+		for f, stat := range ls {
+			dlog.Info("%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
+			if showExtendedInfo {
+				decloacker.PrintFileExtendedInfo(stat.Sys())
+			}
+		}
+		dlog.Log("\n")
+		dlog.Info("%d files scanned\n\n", total)
+	}
+}
+
+func printStat() {
+	stats := decloacker.Stat(CLI.Stat.Paths)
+
+	for path, st := range stats {
+		dlog.Info("%s:\n", path)
+		dlog.Info("%s\t%d\t%s\t%s\n",
+			st.Mode(),
+			st.Size(),
+			st.ModTime().Format(time.RFC3339),
+			st.Name(),
+		)
+		if st == nil || st.Sys() == nil {
+			dlog.Debug("stat.Sys() nil, not available\n")
+			continue
+		}
+		decloacker.PrintFileExtendedInfo(st.Sys())
+	}
+	dlog.Log("\n")
 }
 
 /*func checkAll(paths []string, deep bool) {
