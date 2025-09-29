@@ -75,6 +75,9 @@ func Ls(dir string, args ...string) map[string]fs.FileInfo {
 // Find uses the command "find" to find files and directories
 func Find(dir string, args ...string) map[string]fs.FileInfo {
 	files := make(map[string]fs.FileInfo)
+	// Follow symbolic links when parsing the cmdline, otherwise scanning a symlink
+	// that points to a directory returns just the directory.
+	args = append([]string{"-H"}, args...)
 
 	cmd := exec.Command(CmdFind, args...)
 	out, err := cmd.Output()
