@@ -134,6 +134,6 @@ func Error(msg string, args ...any) {
 
 func Detection(msg string, args ...any) {
 	if LogLevel <= DETECTION {
-		fmt.Fprintf(os.Stderr, logLevelColor[DETECTION]+msg, args...)
+		fmt.Printf(logLevelColor[DETECTION]+msg, args...)
 	}
 }

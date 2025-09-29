@@ -198,7 +198,7 @@ func main() {
 			dlog.Error("%s\n", err)
 		} else {
 			for _, file := range list {
-				dlog.Log("%s\t%d\t%s\t%s\n", file.Mode(), file.Size(), file.ModTime().Format(time.RFC3339), file.Name())
+				dlog.Detection("%s\t%d\t%s\t%s\n", file.Mode(), file.Size(), file.ModTime().Format(time.RFC3339), file.Name())
 			}
 		}
 
@@ -253,7 +253,7 @@ func printLs(showExtendedInfo bool) {
 				dlog.Info("%s (no stat info)\n", f)
 				continue
 			}
-			dlog.Info("%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
+			dlog.Detection("%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
 			if showExtendedInfo {
 				decloacker.PrintFileExtendedInfo(stat.Sys())
 			}
@@ -268,7 +268,7 @@ func printStat() {
 
 	for path, st := range stats {
 		dlog.Info("%s:\n", path)
-		dlog.Info("%s\t%d\t%s\t%s\n",
+		dlog.Detection("%s\t%d\t%s\t%s\n",
 			st.Mode(),
 			st.Size(),
 			st.ModTime().Format(time.RFC3339),

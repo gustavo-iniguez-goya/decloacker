@@ -23,7 +23,7 @@ func CompareFiles(orig, expected map[string]os.FileInfo) int {
 
 		if statOrig, found := orig[file]; !found {
 			hidden[file] = stat
-			log.Warn("\tHIDDEN: %s\n\n", file)
+			log.Detection("\tHIDDEN: %s\n\n", file)
 			continue
 		} else {
 			if statOrig != nil && stat != nil {

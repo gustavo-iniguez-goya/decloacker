@@ -1,11 +1,17 @@
 package decloacker
 
 import (
+	"os"
 	"syscall"
 	"time"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
+
+func Exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
 
 func stripLastSlash(dir string) string {
 	if dir == "/" {
@@ -31,7 +37,7 @@ func PrintFileExtendedInfo(st any) {
 		log.Debug("stat.Sys() not instance of syscall.Stat_t? review\n")
 		return
 	}
-	log.Log("\n\tSize: %d \tBlock size: %d \tBlocks: %d\n\tDevice: %d \tRdev: %d \tInode: %d \tLinks: %d\n\tUID: %d GID: %d\n\tAccess: %s\n\tModify: %s\n\tChange: %s\n\n",
+	log.Detection("\n\tSize: %d \tBlock size: %d \tBlocks: %d\n\tDevice: %d \tRdev: %d \tInode: %d \tLinks: %d\n\tUID: %d GID: %d\n\tAccess: %s\n\tModify: %s\n\tChange: %s\n\n",
 		statt.Size,
 		statt.Blksize,
 		statt.Blocks,
