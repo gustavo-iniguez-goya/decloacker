@@ -8,7 +8,7 @@ import (
 	//"net"
 	"os"
 	"syscall"
-	//"time"
+	"time"
 
 	//"github.com/gustavo-iniguez-goya/decloacker"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
@@ -17,6 +17,51 @@ import (
 
 // common functions to list or read files/directories by using Go's standard library
 // (i.e.: without using libc's functions).
+
+func Stat(paths []string) int {
+	log.Info("Stat %v\n", paths)
+
+	for _, p := range paths {
+		stat, err := os.Stat(p)
+		if err != nil {
+			log.Error("Unable to stat %s: %s\n", p, err)
+			continue
+		}
+		log.Info("%s:\n", p)
+		log.Info("%s\t%d\t%s\t%s\n",
+			stat.Mode(),
+			stat.Size(),
+			stat.ModTime().Format(time.RFC3339),
+			stat.Name(),
+		)
+		if stat.Sys() == nil {
+			log.Debug("stat.Sys() nil, not available\n")
+			continue
+		}
+		statt, statok := stat.Sys().(*syscall.Stat_t)
+		if !statok {
+			log.Debug("stat.Sys() not instance of syscall.Stat_t? review\n")
+			continue
+		}
+		log.Log("\n\tSize: %d \tBlock size: %d \tBlocks: %d\n\tDevice: %d \tRdev: %d \tInode: %d \tLinks: %d\n\tUID: %d GID: %d\n\tAccess: %s\n\tModify: %s\n\t Birth: %s\n\n",
+			statt.Size,
+			statt.Blksize,
+			statt.Blocks,
+			statt.Dev,
+			statt.Rdev,
+			statt.Ino,
+			statt.Nlink,
+			statt.Uid,
+			statt.Gid,
+			time.Unix(statt.Atim.Sec, statt.Atim.Nsec),
+			time.Unix(statt.Mtim.Sec, statt.Mtim.Nsec),
+			time.Unix(statt.Ctim.Sec, statt.Ctim.Nsec),
+		)
+	}
+	log.Log("\n")
+
+	return OK
+}
 
 func Cat(paths []string) int {
 	log.Info("Cat file %v\n", paths)

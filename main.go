@@ -49,6 +49,9 @@ var CLI struct {
 	Cat struct {
 		Paths []string `arg:"" optional:"" name:"paths" help:"Paths to cat." type:"path"`
 	} `cmd:"" help:"Cat files via syscalls."`
+	Stat struct {
+		Paths []string `arg:"" help:"File path to stat." required:"" name:"paths" type:"path"`
+	} `cmd:"" help:"Get details of a file or directory"`
 	Netstat struct {
 		// FIXME: this enum affects other commands?
 		// enum:"tcp,udp,udplite,icmp,dccp,sctp,igmp,raw"
@@ -163,6 +166,8 @@ func main() {
 		ret = decloacker.Rename(CLI.Mv.Orig, CLI.Mv.Dest)
 	case "cat <paths>":
 		ret = decloacker.Cat(CLI.Cat.Paths)
+	case "stat <paths>":
+		ret = decloacker.Stat(CLI.Stat.Paths)
 
 	case "netstat <protos>":
 		ret = decloacker.Netstat(CLI.Netstat.Protos)
