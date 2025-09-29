@@ -249,6 +249,10 @@ func printLs(showExtendedInfo bool) {
 		_, ls := decloacker.ListFiles(p, sys.CmdLs, CLI.Ls.Recursive)
 		total := len(ls)
 		for f, stat := range ls {
+			if stat == nil {
+				dlog.Info("%s (no stat info)\n", f)
+				continue
+			}
 			dlog.Info("%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
 			if showExtendedInfo {
 				decloacker.PrintFileExtendedInfo(stat.Sys())
