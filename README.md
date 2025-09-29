@@ -284,15 +284,17 @@ tainted: d diamorphine/, OE
 	WARNING: "diamorphine" kmod HIDDEN from /proc/modules
 
 root@localhost:~# 
-```
 
 You can also use `decloacker disk --dev=/dev/sda1 cp /path/to/hidden_file.txt hidden_file_backup.txt` (only for ext4 filesystems).
+```
 
 ### Resources
 
  - [User-space library rootkits revisited: Are user-space detection mechanisms futile?](https://arxiv.org/html/2506.07827v1)
  - [The Hidden Threat: Analysis of Linux Rootkit Techniques and Limitations of Current Detection Tools](https://dl.acm.org/doi/10.1145/3688808)
- - [Hiding Linux Processes with Bind Mounts](https://righteousit.com/2024/07/24/hiding-linux-processes-with-bind-mounts/)
  - [Linux rootkits explained – Part 1: Dynamic linker hijacking](https://www.wiz.io/blog/linux-rootkits-explained-part-1-dynamic-linker-hijacking)
  - [Linux rootkits explained – Part 2: Loadable kernel modules](https://www.wiz.io/blog/linux-rootkits-explained-part-2-loadable-kernel-modules#detecting-lkm-rootkits-85)
  - [In-Depth Study of Linux Rootkits: Evolution, Detection, and Defense](https://www.first.org/resources/papers/amsterdam25/FIRST_Amsterdam_2025_Linux_Rootkits.pdf)
+ - [Sandfly Security's articles on Linux forensics and malware](https://sandflysecurity.com/blog/tag/linux-forensics)
+ - [Hiding Linux Processes with Bind Mounts](https://righteousit.com/2024/07/24/hiding-linux-processes-with-bind-mounts/)
+ - [How is /proc able to list process IDs](https://ops.tips/blog/how-is-proc-able-to-list-pids/)
