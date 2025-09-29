@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strconv"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
@@ -38,14 +39,21 @@ var (
 		18: {"N", "an in-kernel test (e.g. KUnit) has been run"},
 		19: {"J", "userspace used mutating debug op in fwctl (fwctl debug write)"},
 	}
+
+	// search for kmods under /sys/kernel/tracing/*
+	reKmodBrckt = regexp.MustCompile(`\[([a-zA-Z0-9_-]+)\]`)
 )
 
 func CheckHiddenLKM() int {
 	tainted := CheckTainted()
-	if !tainted {
-		return OK
+	retT := CheckTracingModules()
+	retP := CheckProcModules(tainted)
+
+	if retT != OK || retP != OK {
+		return retT
 	}
-	return CheckProcModules(tainted)
+
+	return OK
 }
 
 func CheckTainted() bool {
@@ -107,6 +115,67 @@ func CheckProcModules(tainted bool) int {
 
 	if !tainted_kmods {
 		log.Detection("\n\tWARNING: the kernel is tainted, but we haven't found any kmod tainting the kernel. REVIEW\n\n")
+	}
+
+	return ret
+}
+
+// CheckTracingModules verifies that all modules hooking functions exists under /sys/modules/, /proc/modules and /proc/kallsyms.
+func CheckTracingModules() int {
+	log.Info("Checking kernel modules hooks\n")
+
+	ret := OK
+	procModules, _ := ioutil.ReadFile("/proc/modules")
+	procKallsyms, _ := ioutil.ReadFile("/proc/kallsyms")
+	kmodList := make(map[string]struct{})
+
+	monitorPaths := []string{
+		"/sys/kernel/tracing/enabled_functions",
+		"/sys/kernel/tracing/touched_functions",
+	}
+
+	for _, path := range monitorPaths {
+		if !Exists(path) {
+			continue
+		}
+		log.Debug(" scanning %s\n", path)
+		content, err := os.ReadFile(path)
+		if err != nil {
+			log.Error(" error reading %s: %s\n", path, err)
+			continue
+		}
+		kmods := reKmodBrckt.FindAllStringSubmatch(string(content), -1)
+		if len(kmods) == 0 {
+			log.Debug(" no kmods found hooking functions in %s\n", path)
+			continue
+		}
+
+		for _, k := range kmods {
+			if _, found := kmodList[k[1]]; found {
+				continue
+			}
+			log.Debug(" analyzing kmod: %s\n", k[1])
+
+			log.Debug(" checking %s in /proc/modules\n")
+			if !bytes.Contains(procModules, []byte(k[1])) {
+				log.Detection("\tWARNING (tracing): possible kmod hidden from /proc/modules: %v\n", k[1])
+				kmodList[k[1]] = struct{}{}
+			}
+			log.Debug(" checking /proc/kallsyms\n")
+			if !bytes.Contains(procKallsyms, []byte(k[1])) {
+				log.Detection("\tWARNING (tracing): possible kmod hidden from /proc/kallsyms: %v\n", k[1])
+				kmodList[k[1]] = struct{}{}
+			}
+			log.Debug(" checking /sys/module/%s\n", k[1])
+			if !Exists("/sys/module/" + k[1]) {
+				log.Detection("\tWARNING (tracing): possible kmod hidden from /sys/module: %v\n", k[1])
+				kmodList[k[1]] = struct{}{}
+			}
+		}
+	}
+	log.Log("\n")
+	if len(kmodList) > 0 {
+		ret = KMOD_HIDDEN
 	}
 
 	return ret
