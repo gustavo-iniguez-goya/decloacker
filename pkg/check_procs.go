@@ -15,6 +15,10 @@ const (
 	PidName = 0
 	PidPID  = 5
 	PidPPID = 6
+
+	ProcPrefix = "/proc/"
+	ProcMounts = "/proc/mounts"
+	ProcPidMax = "/proc/sys/kernel/pid_max"
 )
 
 var (
@@ -36,6 +40,63 @@ func getPidInfo(procPath string) ([][]string, string, error) {
 	return status, exe, nil
 }
 
+func bruteForcePids(expected map[string]os.FileInfo) int {
+	ret := OK
+
+	hiddenProcs := make(map[int]string)
+	pidMaxTmp, _ := os.ReadFile(ProcPidMax)
+	pidMax, err := strconv.Atoi(string(bytes.Trim(pidMaxTmp, "\n")))
+	if pidMax == 0 {
+		log.Debug("/proc/sys/kernel/pid_max should not be 0 (error? %s)", err)
+		pidMax = 4194304 // could be less
+	}
+
+	log.Info("trying with brute force (pid max: %d):\n", pidMax)
+
+	procPath := ""
+	for pid := 1; pid < pidMax; pid++ {
+		procPath = fmt.Sprint(ProcPrefix, pid)
+		if _, found := expected[procPath]; found {
+			continue
+		}
+		err := os.Chdir(procPath)
+		chdirWorked := err == nil
+
+		procPath = fmt.Sprint(ProcPrefix, pid, "/status")
+		status, err := os.ReadFile(procPath)
+		if err != nil {
+			if chdirWorked {
+				log.Detection("WARNING: proc found via chdir: %d\n", pid)
+			}
+			continue
+		}
+		// exclude threads?
+		if !bytes.Contains(status, []byte(
+			fmt.Sprint("Tgid:\t", pid),
+		)) {
+			log.Debug("excluding pid %d, possible thread\n", pid)
+			continue
+		}
+
+		procPath = fmt.Sprint(ProcPrefix, pid, "/comm")
+		comm, _ := os.ReadFile(procPath)
+		procPath = fmt.Sprint(ProcPrefix, pid, "/cmdline")
+		cmdline, err := os.ReadFile(procPath)
+		procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
+		exe, _ := os.Readlink(procPath)
+		hiddenProcs[pid] = exe
+
+		log.Detection("WARNING: hidden proc? /proc/%d\n", pid)
+		log.Detection("\n\texe: %s\n\tcomm: %s\n\tcmdline: %s\n\n", exe, bytes.Trim(comm, "\n"), cmdline)
+	}
+
+	if len(hiddenProcs) == 0 && ret == OK {
+		log.Info("No hidden processes found using brute force\n\n")
+	}
+
+	return ret
+}
+
 // CheckBindMounts looks for PIDs hidden with bind mounts.
 func CheckBindMounts() int {
 	ret := OK
@@ -52,7 +113,6 @@ func CheckBindMounts() int {
 			exe,
 		)
 
-		// TODO: umount procPath
 		err = exec.Command("umount", procPath).Run()
 		if err != nil {
 			log.Error("unable to umount %s to unhide the PID\n", procPath)
@@ -70,7 +130,7 @@ func CheckBindMounts() int {
 
 	}
 
-	mounts, err := os.ReadFile("/proc/mounts")
+	mounts, err := os.ReadFile(ProcMounts)
 	if err != nil {
 		log.Error("mounted pid: %s", err)
 	} else {
@@ -92,60 +152,26 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	log.Info("Checking hidden processes:\n\n")
 
 	ret := OK
+	retBrute := OK
 	retBind := CheckBindMounts()
-
-	hiddenProcs := make(map[int]string)
-	pidMaxTmp, _ := os.ReadFile("/proc/sys/kernel/pid_max")
-	pidMax, err := strconv.Atoi(string(bytes.Trim(pidMaxTmp, "\n")))
-	if pidMax == 0 {
-		log.Debug("/proc/sys/kernel/pid_max should not be 0 (error? %s)", err)
-		pidMax = 4194304 // could be less
-	}
 
 	orig, expected := ListFiles("/proc", "ls", false)
 	ret = CompareFiles(orig, expected)
 
-	if !doBruteForce {
-		if len(hiddenProcs) == 0 && ret == OK && retBind == OK {
-			log.Info("No hidden processes found. You can try it with \"decloacker scan hidden-procs --brute-force\"\n\n")
-		}
-		return ret
-	}
-	log.Info("trying with brute force (pid max: %d):\n", pidMax)
-
-	procPath := ""
-	for pid := 1; pid < pidMax; pid++ {
-		procPath = fmt.Sprint("/proc/", pid)
-		if _, found := expected[procPath]; found {
-			continue
-		}
-		procPath = fmt.Sprint("/proc/", pid, "/status")
-		status, err := os.ReadFile(procPath)
-		if err != nil {
-			continue
-		}
-		// exclude threads?
-		if !bytes.Contains(status, []byte(
-			fmt.Sprint("Tgid:\t", pid),
-		)) {
-			log.Debug("excluding pid %d, possible thread\n", pid)
-			continue
-		}
-
-		procPath = fmt.Sprint("/proc/", pid, "/comm")
-		comm, _ := os.ReadFile(procPath)
-		procPath = fmt.Sprint("/proc/", pid, "/cmdline")
-		cmdline, err := os.ReadFile(procPath)
-		procPath = fmt.Sprint("/proc/", pid, "/exe")
-		exe, _ := os.Readlink(procPath)
-		hiddenProcs[pid] = exe
-
-		log.Detection("WARNING: hidden proc? /proc/%d\n", pid)
-		log.Detection("\n\texe: %s\n\tcomm: %s\n\tcmdline: %s\n\n", exe, bytes.Trim(comm, "\n"), cmdline)
+	if doBruteForce {
+		retBrute = bruteForcePids(expected)
 	}
 
-	if len(hiddenProcs) == 0 && ret == OK && retBind == OK {
-		log.Info("No hidden processes found using brute force\n\n")
+	if retBind != OK || retBrute != OK {
+		log.Warn("hidden processes found.\n\n")
+		if retBind != OK {
+			ret = retBind
+		}
+		if retBrute != OK {
+			ret = retBrute
+		}
+	} else if ret == OK {
+		log.Info("No hidden processes found. You can try it with \"decloacker scan hidden-procs --brute-force\"\n\n")
 	}
 
 	return ret
