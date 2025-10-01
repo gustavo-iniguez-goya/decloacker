@@ -30,6 +30,6 @@ jobs:
 
       - name: Build
         run: |
-          apt install libbpf-dev clang
+          sudo apt install libbpf-dev clang
           make
 
