@@ -12,6 +12,7 @@ require (
 
 require (
 	github.com/anchore/go-lzo v0.1.0 // indirect
+	github.com/cilium/ebpf v0.19.0
 	github.com/djherbis/times v1.6.0 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
 	github.com/google/uuid v1.3.0 // indirect

@@ -9,6 +9,7 @@ import (
 	"github.com/diskfs/go-diskfs"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg"
 	disk "github.com/gustavo-iniguez-goya/decloacker/pkg/disk"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
 	dlog "github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
 )
@@ -128,6 +129,7 @@ var CLI struct {
 }
 
 func main() {
+	ebpf.ConfigureIters()
 
 	ctx := kong.Parse(&CLI,
 		kong.Name("decloacker"),
@@ -244,6 +246,8 @@ func main() {
 		ctx.PrintUsage(true)
 		ret = decloacker.ERROR
 	}
+
+	ebpf.CleanupIters()
 	os.Exit(ret)
 }
 

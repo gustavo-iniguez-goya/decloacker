@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
 
@@ -52,6 +53,7 @@ func CheckHiddenLKM() int {
 	if retT != OK || retP != OK {
 		return retT
 	}
+	log.Ok("no kernel modules hidden found\n")
 
 	return OK
 }
@@ -89,6 +91,7 @@ func CheckProcModules(tainted bool) int {
 	kmodList := make(map[string]fs.DirEntry)
 	procModules, _ := ioutil.ReadFile("/proc/modules")
 	procKallsyms, _ := ioutil.ReadFile("/proc/kallsyms")
+	ksymList := ebpf.GetKmodList()
 
 	kmods, _ := os.ReadDir("/sys/module")
 	for _, k := range kmods {
@@ -112,8 +115,31 @@ func CheckProcModules(tainted bool) int {
 			}
 		}
 	}
+	for kname, kmod := range ksymList {
+		if kmod.Type != "MOD" && kmod.Type != "FTRACE_MOD" {
+			continue
+		}
+		if !Exists("/sys/module/" + kname) {
+			log.Detection("\n\tWARNING (eBPF): \"%s\" kmod HIDDEN from /sys/module\n", kname)
+			log.Log("\t%q\n", kmod)
+			ret = KMOD_HIDDEN
+		}
+		if !bytes.Contains(procModules, []byte(kname)) {
+			log.Detection("\n\tWARNING (eBPF): \"%s\" kmod HIDDEN from /proc/modules\n", kname)
+			log.Log("\t%q\n", kmod)
+			ret = KMOD_HIDDEN
+		}
+		if !bytes.Contains(procKallsyms, []byte(kname)) {
+			log.Detection("\n\tWARNING (eBPF): \"%s\" kmod HIDDEN from /proc/kallsyms\n", kname)
+			log.Log("\t%q\n", kmod)
+			ret = KMOD_HIDDEN
+		}
+	}
+	if ret != OK {
+		log.Log("\n")
+	}
 
-	if !tainted_kmods {
+	if tainted && !tainted_kmods {
 		log.Detection("\n\tWARNING: the kernel is tainted, but we haven't found any kmod tainting the kernel. REVIEW\n\n")
 	}
 
@@ -173,8 +199,8 @@ func CheckTracingModules() int {
 			}
 		}
 	}
-	log.Log("\n")
 	if len(kmodList) > 0 {
+		log.Log("\n")
 		ret = KMOD_HIDDEN
 	}
 

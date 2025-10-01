@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 )
 
@@ -157,6 +158,12 @@ func CheckHiddenProcs(doBruteForce bool) int {
 
 	orig, expected := ListFiles("/proc", "ls", false)
 	ret = CompareFiles(orig, expected)
+	liveTasks := ebpf.GetPidList()
+	for _, t := range liveTasks {
+		if _, found := orig["/proc/"+t.Pid]; !found {
+			log.Detection("\tWARNING (ebpf): pid hidden? %s\n", t.Pid)
+		}
+	}
 
 	if doBruteForce {
 		retBrute = bruteForcePids(expected)
