@@ -25,7 +25,7 @@ var (
 	LiveDir   = "/sys/fs/bpf/decloacker"
 	TasksPath = "/sys/fs/bpf/decloacker/tasks"
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
-	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)`)
+	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\scomm=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
 	reKmods       = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
 	ProgDumpTasks = "dump_tasks"
@@ -119,12 +119,19 @@ func GetPidList() (taskList []Task) {
 	lines := strings.Split(string(tasks), "\n")
 	for _, line := range lines {
 		parts := reTasks.FindAllStringSubmatch(line, 1)
-		if len(parts) == 0 || len(parts[0]) < 3 {
+		if len(parts) == 0 || len(parts[0]) < 4 {
 			continue
 		}
+		pid := parts[0][1]
+		ppid := parts[0][2]
+		// exclude threads
+		if pid != ppid {
+			continue
+		}
+		// index 0 is the string that matched
 		taskList = append(taskList,
 			[]Task{
-				Task{Pid: parts[0][1], PPid: parts[0][2]},
+				Task{Pid: pid, PPid: ppid, Comm: parts[0][3]},
 			}...)
 	}
 
@@ -155,6 +162,7 @@ func GetKmodList() map[string]Kmod {
 		if strings.HasPrefix(parts[0][4], "__builtin") {
 			continue
 		}
+		// index 0 is the string that matched
 		kmodList[parts[0][4]] = Kmod{
 			Addr:  parts[0][1],
 			AType: parts[0][2],
@@ -168,7 +176,6 @@ func GetKmodList() map[string]Kmod {
 }
 
 func CleanupIters() {
-	log.Debug("ebpf.CleanupIters()\n")
 	for _, h := range hooks {
 		h.Close()
 	}

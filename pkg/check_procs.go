@@ -37,6 +37,9 @@ func getPidInfo(procPath string) ([][]string, string, error) {
 	if err != nil {
 		exe = "(unable to read process path, maybe a kernel thread)"
 	}
+	if len(status) == 0 {
+		err = fmt.Errorf("unable to read %s content", procPath)
+	}
 
 	return status, exe, nil
 }
@@ -61,14 +64,23 @@ func bruteForcePids(expected map[string]os.FileInfo) int {
 			continue
 		}
 		err := os.Chdir(procPath)
+		statInf := Stat([]string{procPath})
 		chdirWorked := err == nil
+		statWorked := len(statInf) > 0
 
 		procPath = fmt.Sprint(ProcPrefix, pid, "/status")
 		status, err := os.ReadFile(procPath)
 		if err != nil {
 			if chdirWorked {
-				log.Detection("WARNING: proc found via chdir: %d\n", pid)
+				log.Detection("\tWARNING: proc found via Chdir: %d\n", pid)
+				ret = PROC_HIDDEN
 			}
+			if statWorked {
+				log.Detection("\tWARNING: PID found via Stat: %d\n", pid)
+				PrintStat([]string{procPath})
+				ret = PROC_HIDDEN
+			}
+
 			continue
 		}
 		// exclude threads?
@@ -89,6 +101,8 @@ func bruteForcePids(expected map[string]os.FileInfo) int {
 
 		log.Detection("WARNING: hidden proc? /proc/%d\n", pid)
 		log.Detection("\n\texe: %s\n\tcomm: %s\n\tcmdline: %s\n\n", exe, bytes.Trim(comm, "\n"), cmdline)
+
+		ret = PROC_HIDDEN
 	}
 
 	if len(hiddenProcs) == 0 && ret == OK {
@@ -128,7 +142,6 @@ func CheckBindMounts() int {
 			status[PidName][2],
 			exe,
 		)
-
 	}
 
 	mounts, err := os.ReadFile(ProcMounts)
@@ -160,16 +173,40 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	ret = CompareFiles(orig, expected)
 	liveTasks := ebpf.GetPidList()
 	for _, t := range liveTasks {
-		if _, found := orig["/proc/"+t.Pid]; !found {
-			log.Detection("\tWARNING (ebpf): pid hidden? %s\n", t.Pid)
+		procPath := ProcPrefix + t.Pid
+
+		if _, found := orig[procPath]; found {
+			continue
 		}
+
+		log.Detection("\tWARNING (ebpf): pid hidden? %s, %s\n", t.Pid, t.Comm)
+		status, exe, err := getPidInfo(procPath)
+		if err != nil {
+			log.Debug("unable to obtain detailed information of the process: %s\n", err)
+			// sometimes, ls/cd/readlink/etc don't work with a path, but stat does (no the command, but the syscall).
+			statInf := Stat([]string{procPath})
+			if len(statInf) > 0 {
+				log.Detection("\tPID confirmed via Stat: %s, %s\n\n", t.Pid, t.Comm)
+				PrintStat([]string{procPath})
+			}
+			ret = PROC_HIDDEN
+			continue
+		}
+
+		log.Detection("\tHIDDEN PID:\n\t  PID: %s\n\t  PPid: %s\n\t  Comm: %s\n\t  Path: %s\n\n",
+			status[PidPID][2],
+			status[PidPPID][2],
+			status[PidName][2],
+			exe,
+		)
+		ret = PROC_HIDDEN
 	}
 
 	if doBruteForce {
 		retBrute = bruteForcePids(expected)
 	}
 
-	if retBind != OK || retBrute != OK {
+	if ret != OK || retBind != OK || retBrute != OK {
 		log.Warn("hidden processes found.\n\n")
 		if retBind != OK {
 			ret = retBind
@@ -177,7 +214,8 @@ func CheckHiddenProcs(doBruteForce bool) int {
 		if retBrute != OK {
 			ret = retBrute
 		}
-	} else if ret == OK {
+	}
+	if ret == OK {
 		log.Info("No hidden processes found. You can try it with \"decloacker scan hidden-procs --brute-force\"\n\n")
 	}
 

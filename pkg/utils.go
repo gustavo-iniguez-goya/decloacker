@@ -31,6 +31,26 @@ func resetRootPath(dir string) string {
 	return dir
 }
 
+func PrintStat(paths []string) {
+	stats := Stat(paths)
+
+	for path, st := range stats {
+		log.Info("Stat %s:\n", path)
+		log.Detection("%s\t%d\t%s\t%s\n",
+			st.Mode(),
+			st.Size(),
+			st.ModTime().Format(time.RFC3339),
+			st.Name(),
+		)
+		if st == nil || st.Sys() == nil {
+			log.Debug("stat.Sys() nil, not available\n")
+			continue
+		}
+		PrintFileExtendedInfo(st.Sys())
+	}
+	log.Log("\n")
+}
+
 func PrintFileExtendedInfo(st any) {
 	statt, statok := st.(*syscall.Stat_t)
 	if !statok {

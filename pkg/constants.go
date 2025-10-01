@@ -8,6 +8,7 @@ const (
 	KMOD_HIDDEN    = 51
 	CONTENT_HIDDEN = 52
 	PID_BIND_MOUNT = 53
+	PROC_HIDDEN    = 54
 )
 
 var (

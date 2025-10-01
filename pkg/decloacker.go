@@ -17,12 +17,10 @@ import (
 func Stat(paths []string) map[string]os.FileInfo {
 	fileDetails := make(map[string]os.FileInfo)
 
-	log.Info("Stat %v\n", paths)
-
 	for _, p := range paths {
 		stat, err := os.Stat(p)
 		if err != nil {
-			log.Error("Unable to stat %s: %s\n", p, err)
+			log.Debug("Unable to stat %s: %s\n", p, err)
 			continue
 		}
 		fileDetails[p] = stat

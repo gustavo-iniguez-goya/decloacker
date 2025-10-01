@@ -162,7 +162,7 @@ func main() {
 	case "cat <paths>":
 		ret = decloacker.Cat(CLI.Cat.Paths)
 	case "stat <paths>":
-		printStat()
+		decloacker.PrintStat(CLI.Stat.Paths)
 
 	case "netstat <protos>":
 		ret = decloacker.Netstat(CLI.Netstat.Protos)
@@ -268,26 +268,6 @@ func printLs(showExtendedInfo bool) {
 		dlog.Log("\n")
 		dlog.Info("%d files scanned\n\n", total)
 	}
-}
-
-func printStat() {
-	stats := decloacker.Stat(CLI.Stat.Paths)
-
-	for path, st := range stats {
-		dlog.Info("%s:\n", path)
-		dlog.Detection("%s\t%d\t%s\t%s\n",
-			st.Mode(),
-			st.Size(),
-			st.ModTime().Format(time.RFC3339),
-			st.Name(),
-		)
-		if st == nil || st.Sys() == nil {
-			dlog.Debug("stat.Sys() nil, not available\n")
-			continue
-		}
-		decloacker.PrintFileExtendedInfo(st.Sys())
-	}
-	dlog.Log("\n")
 }
 
 /*func checkAll(paths []string, deep bool) {
