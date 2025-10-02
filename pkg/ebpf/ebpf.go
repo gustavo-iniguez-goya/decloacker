@@ -3,6 +3,7 @@ package ebpf
 import (
 	"bytes"
 	_ "embed"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -21,7 +22,6 @@ var dumpTask []byte
 var dumpKmod []byte
 
 var (
-	hooks     = []link.Link{}
 	LiveDir   = "/sys/fs/bpf/decloacker"
 	TasksPath = "/sys/fs/bpf/decloacker/tasks"
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
@@ -39,6 +39,7 @@ var (
 		ProgDumpTasks: TasksPath,
 		ProgDumpKmods: KmodsPath,
 	}
+	progHooks = map[string]*link.Iter{}
 )
 
 type Task struct {
@@ -55,7 +56,7 @@ type Kmod struct {
 	Type  string
 }
 
-func ConfigureIters() {
+func ConfigureIters(pinIters bool) {
 	if err := rlimit.RemoveMemlock(); err != nil {
 		log.Warn("[eBPF] unable to remove memlock")
 	}
@@ -64,7 +65,6 @@ func ConfigureIters() {
 		log.Debug("Loading ebpf module %s\n", progName)
 
 		collOpts := ebpf.CollectionOptions{}
-		//specs, err := ebpf.LoadCollectionSpecFromReader(bytes.NewReader(dumpTask[:]))
 		specs, err := ebpf.LoadCollectionSpecFromReader(bytes.NewReader(code[:]))
 		if err != nil {
 			log.Error("[eBPF] module specs error %s: %s\n", progName, err)
@@ -88,16 +88,15 @@ func ConfigureIters() {
 			log.Error("[eBPF] iter link attach error %s: %s\n", progName, err)
 			return
 		}
-		os.Remove(progPaths[progName])
-		err = os.Mkdir(LiveDir, 0600)
-		if err := iter.Pin(progPaths[progName]); err != nil {
-			log.Error("[eBPF] pinning tasks error: %s\n", err)
+
+		if pinIters {
+			os.Remove(progPaths[progName])
+			err = os.Mkdir(LiveDir, 0600)
+			if err := iter.Pin(progPaths[progName]); err != nil {
+				log.Error("[eBPF] pinning tasks error: %s\n", err)
+			}
 		}
-		/*r, err := iter.Open()
-		if err != nil {
-			log.Error("iter.Open: %v\n", err)
-		}*/
-		hooks = append(hooks, iter)
+		progHooks[progName] = iter
 	}
 
 	log.Debug("[eBPF] loaded")
@@ -107,7 +106,19 @@ func ConfigureIters() {
 // The list can be read in /sys/fs/bpf/decloacker/tasks
 // since kernel 5.9
 func GetPidList() (taskList []Task) {
-	tasks, err := os.ReadFile(TasksPath)
+	iter, found := progHooks[ProgDumpTasks]
+	if !found {
+		log.Debug("iter %s not configured?\n", ProgDumpTasks)
+		return taskList
+	}
+	iterReader, err := iter.Open()
+	if err != nil {
+		log.Error("iter.Open: %v\n", err)
+		return taskList
+	}
+	defer iterReader.Close()
+
+	tasks, err := io.ReadAll(iterReader)
 	if err != nil {
 		log.Error("%s not available\n", TasksPath)
 		return taskList
@@ -144,11 +155,24 @@ func GetPidList() (taskList []Task) {
 func GetKmodList() map[string]Kmod {
 	kmodList := make(map[string]Kmod)
 
-	kmods, err := os.ReadFile(KmodsPath)
+	iter, found := progHooks[ProgDumpKmods]
+	if !found {
+		log.Debug("iter %s not configured?\n", ProgDumpKmods)
+		return kmodList
+	}
+	iterReader, err := iter.Open()
+	if err != nil {
+		log.Error("iter.Open: %v\n", err)
+		return kmodList
+	}
+	defer iterReader.Close()
+
+	kmods, err := io.ReadAll(iterReader)
 	if err != nil {
 		log.Error("%s not available\n", KmodsPath)
 		return kmodList
 	}
+
 	if len(kmods) == 0 {
 		log.Warn("[eBPF] kernel tasks empty (check previous errors).\n")
 		return kmodList
@@ -176,10 +200,10 @@ func GetKmodList() map[string]Kmod {
 }
 
 func CleanupIters() {
-	for _, h := range hooks {
+	for _, h := range progHooks {
 		h.Close()
 	}
 
-	os.Remove(TasksPath)
-	os.Remove(KmodsPath)
+	//os.Remove(TasksPath)
+	//os.Remove(KmodsPath)
 }

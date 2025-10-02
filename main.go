@@ -16,8 +16,9 @@ import (
 
 // CLI defines the full command structure.
 var CLI struct {
-	Format   string `short:"f" help:"" global:""`
-	LogLevel string `help:"log level (debug,info,warn,error,detection). Use detection to display only detections" default:"info" enum:"debug,info,warning,error,detection"`
+	Format         string `short:"f" help:"" global:""`
+	LogLevel       string `help:"log level (debug,info,warn,error,detection). Use detection to display only detections" default:"info" enum:"debug,info,warning,error,detection"`
+	PinKernelLists bool   `help:"Make kernel lists permanent (kmods, pids, ...). They'll be available in /sys/fs/bpf/decloacker/tasks and /sys/fs/bpf/decloacker/kmods."`
 	//Output  string `short:"o" help:"" global:""`
 	//LogDate bool   `global:""`
 	//LogTime bool   `global:""`
@@ -129,8 +130,6 @@ var CLI struct {
 }
 
 func main() {
-	ebpf.ConfigureIters()
-
 	ctx := kong.Parse(&CLI,
 		kong.Name("decloacker"),
 		kong.Description("A generic malware unmasker"),
@@ -139,12 +138,14 @@ func main() {
 	dlog.NewLogger(CLI.Format)
 	dlog.SetLogLevel(CLI.LogLevel)
 
-	fmt.Fprintf(os.Stderr, "decloacker v0.0, pid: %d\n\n", os.Getpid())
+	fmt.Fprintf(os.Stderr, "decloacker v0.0.0, pid: %d\n\n", os.Getpid())
 	var ldLib = os.Getenv("LD_LIBRARY_PRELOAD")
 	if ldLib != "" {
 		dlog.Detection("\tWARNING!!\nLD_LIBRARY_PRELOAD env var found: %s\n", ldLib)
 		dlog.Separator()
 	}
+
+	ebpf.ConfigureIters(CLI.PinKernelLists)
 
 	var ret = decloacker.OK
 
