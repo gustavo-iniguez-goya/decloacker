@@ -200,15 +200,18 @@ func GetKmodList() map[string]Kmod {
 		if len(parts) == 0 || len(parts[0]) < 5 {
 			continue
 		}
-		if strings.HasPrefix(parts[0][4], "__builtin") {
+		atype := parts[0][2]
+		kname := parts[0][4]
+		if strings.HasPrefix(kname, "__builtin") && atype == "t" {
+			log.Debug("excluding kmod %s:\n\t%v\n", kname, line)
 			continue
 		}
 		// index 0 is the string that matched
 		kmodList[parts[0][4]] = Kmod{
 			Addr:  parts[0][1],
-			AType: parts[0][2],
+			AType: atype,
 			Func:  parts[0][3],
-			Name:  parts[0][4],
+			Name:  kname,
 			Type:  parts[0][5],
 		}
 	}
