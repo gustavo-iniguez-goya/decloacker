@@ -1,3 +1,21 @@
+/*   Copyright (C) 2025 Gustavo Iñiguez Goya
+//
+//   This file is part of decloacker.
+//
+//   decloacker is free software: you can redistribute it and/or modify
+//   it under the terms of the GNU General Public License as published by
+//   the Free Software Foundation, either version 3 of the License, or
+//   (at your option) any later version.
+//
+//   decloacker is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of the GNU General Public License
+//   along with decloacker.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package main
 
 import (
@@ -14,11 +32,23 @@ import (
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
 )
 
+type VersionFlag string
+
+func (v VersionFlag) Decode(_ *kong.DecodeContext) error { return nil }
+func (v VersionFlag) IsBool() bool                       { return true }
+func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
+	fmt.Printf("decloacker - %s\n%s\n\n",
+		decloacker.Version, decloacker.License)
+	os.Exit(0)
+	return nil
+}
+
 // CLI defines the full command structure.
 var CLI struct {
-	Format         string `short:"f" help:"" global:""`
-	LogLevel       string `help:"log level (debug,info,warn,error,detection). Use detection to display only detections" default:"info" enum:"debug,info,warning,error,detection"`
-	PinKernelLists bool   `help:"Make kernel lists permanent (kmods, pids, ...). They'll be available in /sys/fs/bpf/decloacker/tasks and /sys/fs/bpf/decloacker/kmods."`
+	Version        VersionFlag `help:"Print version"`
+	Format         string      `short:"f" help:"" global:""`
+	LogLevel       string      `help:"log level (debug,info,warn,error,detection). Use detection to display only detections" default:"info" enum:"debug,info,warning,error,detection"`
+	PinKernelLists bool        `help:"Make kernel lists permanent (kmods, pids, ...). They'll be available in /sys/fs/bpf/decloacker/tasks and /sys/fs/bpf/decloacker/kmods."`
 	//Output  string `short:"o" help:"" global:""`
 	//LogDate bool   `global:""`
 	//LogTime bool   `global:""`
@@ -135,10 +165,10 @@ func main() {
 		kong.Description("A generic malware unmasker"),
 		kong.UsageOnError(),
 	)
+
 	dlog.NewLogger(CLI.Format)
 	dlog.SetLogLevel(CLI.LogLevel)
 
-	fmt.Fprintf(os.Stderr, "decloacker v0.0.0, pid: %d\n\n", os.Getpid())
 	var ldLib = os.Getenv("LD_LIBRARY_PRELOAD")
 	if ldLib != "" {
 		dlog.Detection("\tWARNING!!\nLD_LIBRARY_PRELOAD env var found: %s\n", ldLib)
