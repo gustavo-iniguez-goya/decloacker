@@ -26,6 +26,18 @@ var (
 	reStatusField = regexp.MustCompile(`([A-Za-z]+):\t(.*)\n`)
 )
 
+func printHiddenPid(pid, ppid, inode, uid, gid, comm, exe string) {
+	log.Detection("\tPID: %s\tPPid: %s\n\tInode: %s\tUid: %s\tGid: %s\n\tComm: %s\n\tPath: %s\n\n",
+		pid,
+		ppid,
+		inode,
+		uid,
+		gid,
+		comm,
+		exe,
+	)
+}
+
 func getPidInfo(procPath string) ([][]string, string, error) {
 	statusContent, err := os.ReadFile(procPath + "/status")
 	if err != nil {
@@ -171,6 +183,7 @@ func CheckHiddenProcs(doBruteForce bool) int {
 
 	orig, expected := ListFiles("/proc", "ls", false)
 	ret = CompareFiles(orig, expected)
+
 	liveTasks := ebpf.GetPidList()
 	for _, t := range liveTasks {
 		procPath := ProcPrefix + t.Pid
@@ -179,26 +192,14 @@ func CheckHiddenProcs(doBruteForce bool) int {
 			continue
 		}
 
-		log.Detection("\tWARNING (ebpf): pid hidden? %s, %s\n", t.Pid, t.Comm)
-		status, exe, err := getPidInfo(procPath)
-		if err != nil {
-			log.Debug("unable to obtain detailed information of the process: %s\n", err)
-			// sometimes, ls/cd/readlink/etc don't work with a path, but stat does (no the command, but the syscall).
-			statInf := Stat([]string{procPath})
-			if len(statInf) > 0 {
-				log.Detection("\tPID confirmed via Stat: %s, %s\n\n", t.Pid, t.Comm)
-				PrintStat([]string{procPath})
-			}
-			ret = PROC_HIDDEN
-			continue
-		}
+		log.Detection("WARNING (ebpf): pid hidden?\n")
 
-		log.Detection("\tHIDDEN PID:\n\t  PID: %s\n\t  PPid: %s\n\t  Comm: %s\n\t  Path: %s\n\n",
-			status[PidPID][2],
-			status[PidPPID][2],
-			status[PidName][2],
-			exe,
-		)
+		printHiddenPid(t.Pid, t.PPid, t.Inode, t.Uid, t.Gid, t.Comm, t.Exe)
+		statInf := Stat([]string{procPath})
+		if len(statInf) > 0 {
+			log.Detection("\tPID confirmed via Stat: %s, %s\n\n", t.Pid, t.Comm)
+			PrintStat([]string{procPath})
+		}
 		ret = PROC_HIDDEN
 	}
 

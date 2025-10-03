@@ -25,7 +25,7 @@ var (
 	LiveDir   = "/sys/fs/bpf/decloacker"
 	TasksPath = "/sys/fs/bpf/decloacker/tasks"
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
-	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\scomm=(.*)$`)
+	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\scomm=(.{0,16})exe=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
 	reKmods       = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
 	ProgDumpTasks = "dump_tasks"
@@ -43,9 +43,13 @@ var (
 )
 
 type Task struct {
-	Comm string
-	Pid  string
-	PPid string
+	Exe   string
+	Comm  string
+	Inode string
+	Uid   string
+	Gid   string
+	Pid   string
+	PPid  string
 }
 
 type Kmod struct {
@@ -139,10 +143,23 @@ func GetPidList() (taskList []Task) {
 		if pid != ppid {
 			continue
 		}
+		inode := parts[0][3]
+		uid := parts[0][4]
+		gid := parts[0][5]
+		comm := parts[0][6]
+		exe := parts[0][7]
 		// index 0 is the string that matched
 		taskList = append(taskList,
 			[]Task{
-				Task{Pid: pid, PPid: ppid, Comm: parts[0][3]},
+				Task{
+					Pid:   pid,
+					PPid:  ppid,
+					Inode: inode,
+					Uid:   uid,
+					Gid:   gid,
+					Comm:  comm,
+					Exe:   exe,
+				},
 			}...)
 	}
 
