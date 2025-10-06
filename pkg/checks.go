@@ -3,6 +3,7 @@ package decloacker
 import (
 	"io/fs"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
@@ -11,6 +12,17 @@ import (
 // CompareFiles checks if 2 directories have the same number of files
 func CompareFiles(orig, expected map[string]os.FileInfo) int {
 	hidden := make(map[string]fs.FileInfo)
+
+	for p := range orig {
+		if strings.HasPrefix(p, ourProcPath) {
+			delete(orig, p)
+		}
+	}
+	for p := range expected {
+		if strings.HasPrefix(p, ourProcPath) {
+			delete(expected, p)
+		}
+	}
 
 	for file, stat := range expected {
 		if stat != nil {

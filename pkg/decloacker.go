@@ -5,10 +5,16 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"syscall"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
+)
+
+var (
+	ourPid      = strconv.Itoa(os.Getpid())
+	ourProcPath = "/proc/" + ourPid
 )
 
 // common functions to list or read files/directories by using Go's standard library
@@ -162,6 +168,7 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 		//log.Debug("readDir() %s\n", path+"/"+entry.Name())
 		list[path+"/"+entry.Name()] = inf
 	}
+
 	return list
 }
 
