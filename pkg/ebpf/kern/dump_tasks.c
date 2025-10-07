@@ -47,6 +47,19 @@ int dump_tasks(struct bpf_iter__task *ctx)
     char comm[TASK_COMM_LEN]={0};
     BPF_CORE_READ_STR_INTO(&comm, task, comm);
 
+#pragma unroll
+    for (int i = 0; i < sizeof(comm); i++) {
+        if (comm[i] == '\n') {
+            comm[i] = '_';
+        }
+    }
+#pragma unroll
+    for (int i = 0; i < sizeof(path); i++) {
+        if (path[i] == '\n') {
+            path[i] = '_';
+        }
+    }
+
     BPF_SEQ_PRINTF(seq, "pid=%d ppid=%d inode=%d uid=%d gid=%d comm=%s exe=%s\n",
             pid, ppid,
             inode,
@@ -54,6 +67,7 @@ int dump_tasks(struct bpf_iter__task *ctx)
             gid,
             comm,
             path);
+
     __builtin_memset(&path, 0, sizeof(path));
     inode=0;
     return 0;

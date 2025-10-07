@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/cilium/ebpf"
@@ -25,7 +26,7 @@ var (
 	LiveDir   = "/sys/fs/bpf/decloacker"
 	TasksPath = "/sys/fs/bpf/decloacker/tasks"
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
-	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\scomm=(.{0,16})exe=(.*)$`)
+	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\scomm=(.{0,16})\sexe=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
 	reKmods       = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
 	ProgDumpTasks = "dump_tasks"
@@ -61,8 +62,12 @@ type Kmod struct {
 }
 
 func ConfigureIters(pinIters bool) {
+	if os.Getuid() != 0 {
+		log.Warn("[eBPF] execute decloacker as root to use eBPF functionality.\n")
+		return
+	}
 	if err := rlimit.RemoveMemlock(); err != nil {
-		log.Warn("[eBPF] unable to remove memlock")
+		log.Warn("[eBPF] unable to remove memlock\n")
 	}
 
 	for progName, code := range progList {
@@ -146,8 +151,8 @@ func GetPidList() (taskList []Task) {
 		inode := parts[0][3]
 		uid := parts[0][4]
 		gid := parts[0][5]
-		comm := parts[0][6]
-		exe := parts[0][7]
+		comm := strconv.QuoteToASCII(parts[0][6])
+		exe := strconv.QuoteToASCII(parts[0][7])
 		// index 0 is the string that matched
 		taskList = append(taskList,
 			[]Task{
