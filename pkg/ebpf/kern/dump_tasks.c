@@ -2,6 +2,7 @@
 #include <bpf/bpf_tracing.h>
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
+#include "common.h"
 
 char path[1024]={0};
 unsigned long inode=0;
@@ -21,7 +22,9 @@ void get_exe_info(struct mm_struct *mm){
     }
 
     // XXX: kernels 5.x "helper call is not allowed in probe"
-    //bpf_d_path(&exe->f_path, path, 1024);
+#ifdef WITH_PATH
+    bpf_d_path(&exe->f_path, path, 1024);
+#endif
 }
 
 SEC("iter/task")
@@ -47,6 +50,7 @@ int dump_tasks(struct bpf_iter__task *ctx)
     char comm[TASK_COMM_LEN]={0};
     BPF_CORE_READ_STR_INTO(&comm, task, comm);
 
+    // replace \n characters, to avoid conflicts with bpf_seq_printf()
 #pragma unroll
     for (int i = 0; i < sizeof(comm); i++) {
         if (comm[i] == '\n') {

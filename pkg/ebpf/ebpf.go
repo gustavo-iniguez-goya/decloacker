@@ -3,6 +3,7 @@ package ebpf
 import (
 	"bytes"
 	_ "embed"
+	"golang.org/x/sys/unix"
 	"io"
 	"os"
 	"regexp"
@@ -19,6 +20,10 @@ import (
 // this line must go here
 var dumpTask []byte
 
+//go:embed kern/dump_tasks_5x.o
+// this line must go here
+var dumpTask5x []byte
+
 //go:embed kern/dump_kmods.o
 var dumpKmod []byte
 
@@ -28,9 +33,10 @@ var (
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
 	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\scomm=(.{0,16})\sexe=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
-	reKmods       = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
-	ProgDumpTasks = "dump_tasks"
-	ProgDumpKmods = "dump_kmods"
+	reKmods         = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
+	ProgDumpTasks   = "dump_tasks"
+	ProgDumpTasks5x = "dump_tasks"
+	ProgDumpKmods   = "dump_kmods"
 
 	progList = map[string][]byte{
 		ProgDumpTasks: dumpTask,
@@ -70,6 +76,13 @@ func ConfigureIters(pinIters bool) {
 		log.Warn("[eBPF] unable to remove memlock\n")
 	}
 
+	var uname unix.Utsname
+	unix.Uname(&uname)
+	// bpf_d_path() not supported in kernels 5.x
+	if uname.Release[0] != '6' {
+		progList[ProgDumpTasks] = dumpTask5x
+	}
+
 	for progName, code := range progList {
 		log.Debug("Loading ebpf module %s\n", progName)
 
@@ -87,7 +100,7 @@ func ConfigureIters(pinIters bool) {
 		prog := iterTask.Programs[progName]
 		if prog == nil {
 			log.Error("[eBPF] iter task nil %s: %s\n", progName, err)
-			return
+			continue
 		}
 
 		iter, err := link.AttachIter(link.IterOptions{
@@ -95,7 +108,7 @@ func ConfigureIters(pinIters bool) {
 		})
 		if err != nil {
 			log.Error("[eBPF] iter link attach error %s: %s\n", progName, err)
-			return
+			continue
 		}
 
 		if pinIters {
