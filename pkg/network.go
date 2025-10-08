@@ -124,7 +124,8 @@ func Netstat(protos []string) int {
 				ppid = f.PPid
 			}
 
-			log.Log("%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s comm=%s exe=%s\n",
+			log.Log("%-12s%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s comm=%s exe=%s\n",
+				netlink.TCPStatesMap[s.State],
 				"inode", s.INode,
 				"uid", s.UID,
 				"ifname", ifname,
