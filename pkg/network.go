@@ -3,9 +3,11 @@ package decloacker
 import (
 	"golang.org/x/sys/unix"
 	"net"
+	"strconv"
 	"syscall"
 
 	"github.com/evilsocket/opensnitch/daemon/netlink"
+	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
 
 	ntl "github.com/vishvananda/netlink"
@@ -78,6 +80,16 @@ func Netstat(protos []string) int {
 		}
 	}
 
+	files := ebpf.GetFileList()
+	inodes := make(map[uint32]ebpf.File)
+	for _, f := range files {
+		inode, err := strconv.Atoi(f.Inode)
+		if err != nil {
+			continue
+		}
+		inodes[uint32(inode)] = f
+	}
+
 	var ifname string
 	for _, prot := range protos {
 		if prot == "all" {
@@ -93,13 +105,26 @@ func Netstat(protos []string) int {
 			s.ID.Source, s.ID.SourcePort, s.ID.Destination, s.ID.DestinationPort),
 		)*/
 		log.Log("---------------------------------- %s -----------------------------------\n", prot)
+
 		for _, s := range socketList {
 			ifname = ""
 			iface, _ := net.InterfaceByIndex(int(s.ID.Interface))
 			if iface != nil {
 				ifname = iface.Name
 			}
-			log.Log("%s: %6d %s: %5d %s: %-10s, \t%5d:%-16s -> %-16s:%d\n",
+
+			comm := ""
+			exe := ""
+			pid := ""
+			ppid := ""
+			if f, found := inodes[s.INode]; found {
+				comm = f.Comm
+				exe = f.Exe
+				pid = f.Pid
+				ppid = f.PPid
+			}
+
+			log.Log("%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s comm=%s exe=%s\n",
 				"inode", s.INode,
 				"uid", s.UID,
 				"ifname", ifname,
@@ -107,6 +132,8 @@ func Netstat(protos []string) int {
 				s.ID.Source,
 				s.ID.Destination,
 				s.ID.DestinationPort,
+				pid, ppid,
+				comm, exe,
 			)
 		}
 		log.Log("\n")
