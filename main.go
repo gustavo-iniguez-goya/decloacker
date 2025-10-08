@@ -146,6 +146,11 @@ var CLI struct {
 		} `cmd:"" help:"Scan a path." hidden:""`
 	} `cmd:"" help:"Commands to decloack files, directories or kernel modules."`
 
+	Dump struct {
+		Files struct {
+		} `cmd:"" help:"Dump opened files."`
+	} `cmd:"" help:"Commands to dump data from the kernel."`
+
 	// TODO
 	Config struct {
 		Set struct {
@@ -265,6 +270,17 @@ func main() {
 		ret = decloacker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
 	//case "scan all":
 	//	checkAll(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Recursive)
+
+	case "dump files":
+		files := ebpf.GetFileList()
+		for _, f := range files {
+			dlog.Detection("%-10s%-10s%-5s%-8s%-5s%-5s %-16s %s %s\n",
+				f.Pid, f.PPid,
+				f.Fd, f.Inode,
+				f.Uid, f.Gid,
+				f.Comm, f.File, f.Exe,
+			)
+		}
 
 	/* TODO
 	case "config set":

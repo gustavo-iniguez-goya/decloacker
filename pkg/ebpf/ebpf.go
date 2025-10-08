@@ -24,26 +24,34 @@ var dumpTask []byte
 // this line must go here
 var dumpTask5x []byte
 
+//go:embed kern/dump_files.o
+var dumpFiles []byte
+
 //go:embed kern/dump_kmods.o
 var dumpKmod []byte
 
 var (
 	LiveDir   = "/sys/fs/bpf/decloacker"
 	TasksPath = "/sys/fs/bpf/decloacker/tasks"
+	FilesPath = "/sys/fs/bpf/decloacker/files"
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
 	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\scomm=(.{0,16})\sexe=(.*)$`)
+	reFiles   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sfd=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\sfile=(.*)\scomm=(.{0,16})\sexe=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
 	reKmods         = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
 	ProgDumpTasks   = "dump_tasks"
 	ProgDumpTasks5x = "dump_tasks"
+	ProgDumpFiles   = "dump_files"
 	ProgDumpKmods   = "dump_kmods"
 
 	progList = map[string][]byte{
 		ProgDumpTasks: dumpTask,
+		ProgDumpFiles: dumpFiles,
 		ProgDumpKmods: dumpKmod,
 	}
 	progPaths = map[string]string{
 		ProgDumpTasks: TasksPath,
+		ProgDumpFiles: FilesPath,
 		ProgDumpKmods: KmodsPath,
 	}
 	progHooks = map[string]*link.Iter{}
@@ -55,6 +63,18 @@ type Task struct {
 	Inode string
 	Uid   string
 	Gid   string
+	Pid   string
+	PPid  string
+}
+
+type File struct {
+	Exe   string
+	Comm  string
+	File  string
+	Uid   string
+	Gid   string
+	Inode string
+	Fd    string
 	Pid   string
 	PPid  string
 }
@@ -121,7 +141,7 @@ func ConfigureIters(pinIters bool) {
 		progHooks[progName] = iter
 	}
 
-	log.Debug("[eBPF] loaded")
+	log.Debug("[eBPF] loaded\n")
 }
 
 // GetPidList dumps the tasks that are active in the kernel.
@@ -182,6 +202,67 @@ func GetPidList() (taskList []Task) {
 	}
 
 	return taskList
+}
+
+func GetFileList() (fileList []File) {
+	iter, found := progHooks[ProgDumpFiles]
+	if !found {
+		log.Debug("iter %s not configured?\n", ProgDumpFiles)
+		return fileList
+	}
+	iterReader, err := iter.Open()
+	if err != nil {
+		log.Error("iter.Open: %v\n", err)
+		return fileList
+	}
+	defer iterReader.Close()
+
+	files, err := io.ReadAll(iterReader)
+	if err != nil {
+		log.Error("%s not available\n", FilesPath)
+		return fileList
+	}
+	if len(files) == 0 {
+		log.Warn("[eBPF] kernel tasks empty (check previous errors).\n")
+		return fileList
+	}
+	lines := strings.Split(string(files), "\n")
+	for _, line := range lines {
+		parts := reFiles.FindAllStringSubmatch(line, 1)
+		if len(parts) == 0 || len(parts[0]) < 7 {
+			continue
+		}
+		pid := parts[0][1]
+		ppid := parts[0][2]
+		// exclude threads
+		if pid != ppid {
+			continue
+		}
+		fd := parts[0][3]
+		inode := parts[0][4]
+		uid := parts[0][5]
+		gid := parts[0][6]
+		file := strconv.QuoteToASCII(parts[0][7])
+		comm := strconv.QuoteToASCII(parts[0][8])
+		exe := strconv.QuoteToASCII(parts[0][9])
+		// index 0 is the string that matched
+		fileList = append(fileList,
+			[]File{
+				File{
+					Pid:   pid,
+					PPid:  ppid,
+					Inode: inode,
+					Fd:    fd,
+					Uid:   uid,
+					Gid:   gid,
+					File:  file,
+					Comm:  comm,
+					Exe:   exe,
+				},
+			}...)
+	}
+
+	return fileList
 }
 
 // GetKmodList dumps the kernel modules that are active in the kernel.
