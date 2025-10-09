@@ -98,7 +98,7 @@ func Netstat(protos []string) int {
 
 		socketList, err := netlink.SocketsDump(knownProtos[prot].Fam, knownProtos[prot].Proto)
 		if err != nil {
-			log.Error("%s netstat error: %s\n", prot, err)
+			log.Debug("%s netstat error: %s\n", prot, err)
 			continue
 		}
 		/*pid := procmon.GetPIDFromINode(inode, fmt.Sprint(inode,
