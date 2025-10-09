@@ -184,9 +184,12 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	orig, expected := ListFiles("/proc", "ls", false)
 	ret = CompareFiles(orig, expected)
 
-	liveTasks := ebpf.GetPidList()
+	liveTasks := ebpf.GetPidList("")
 	for _, t := range liveTasks {
 		procPath := ProcPrefix + t.Pid
+		if procPath == ourProcPath {
+			continue
+		}
 
 		if _, found := orig[procPath]; found {
 			continue

@@ -3,7 +3,6 @@ package decloacker
 import (
 	"io/fs"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
@@ -13,16 +12,8 @@ import (
 func CompareFiles(orig, expected map[string]os.FileInfo) int {
 	hidden := make(map[string]fs.FileInfo)
 
-	for p := range orig {
-		if strings.HasPrefix(p, ourProcPath) {
-			delete(orig, p)
-		}
-	}
-	for p := range expected {
-		if strings.HasPrefix(p, ourProcPath) {
-			delete(expected, p)
-		}
-	}
+	delete(orig, ourProcPath)
+	delete(expected, ourProcPath)
 
 	for file, stat := range expected {
 		if stat != nil {

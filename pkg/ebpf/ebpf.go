@@ -35,8 +35,8 @@ var (
 	TasksPath = "/sys/fs/bpf/decloacker/tasks"
 	FilesPath = "/sys/fs/bpf/decloacker/files"
 	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
-	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\scomm=(.{0,16})\sexe=(.*)$`)
-	reFiles   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sfd=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\sfile=(.*)\scomm=(.{0,16})\sexe=(.*)$`)
+	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\shost=([0-9A-Za-z_-]+)\scomm=(.{0,16})\sexe=(.*)$`)
+	reFiles   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sfd=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\shost=([0-9A-Za-z_-]+)\sfile=(.*)\scomm=(.{0,16})\sexe=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
 	reKmods         = regexp.MustCompile(`addr=([a-zA-Z0-9]+)\satype=([a-zA-Z0-9])\sfunc=([a-zA-Z0-9\-_]+)\sname=([a-zA-Z0-9\-_]+)\stype=([a-zA-Z0-9\-_]+)`)
 	ProgDumpTasks   = "dump_tasks"
@@ -58,25 +58,27 @@ var (
 )
 
 type Task struct {
-	Exe   string
-	Comm  string
-	Inode string
-	Uid   string
-	Gid   string
-	Pid   string
-	PPid  string
+	Exe      string
+	Comm     string
+	Hostname string
+	Inode    string
+	Uid      string
+	Gid      string
+	Pid      string
+	PPid     string
 }
 
 type File struct {
-	Exe   string
-	Comm  string
-	File  string
-	Uid   string
-	Gid   string
-	Inode string
-	Fd    string
-	Pid   string
-	PPid  string
+	Exe      string
+	Comm     string
+	Hostname string
+	File     string
+	Uid      string
+	Gid      string
+	Inode    string
+	Fd       string
+	Pid      string
+	PPid     string
 }
 
 type Kmod struct {
@@ -147,7 +149,7 @@ func ConfigureIters(pinIters bool) {
 // GetPidList dumps the tasks that are active in the kernel.
 // The list can be read in /sys/fs/bpf/decloacker/tasks
 // since kernel 5.9
-func GetPidList() (taskList []Task) {
+func GetPidList(filterHost string) (taskList []Task) {
 	iter, found := progHooks[ProgDumpTasks]
 	if !found {
 		log.Debug("iter %s not configured?\n", ProgDumpTasks)
@@ -181,22 +183,28 @@ func GetPidList() (taskList []Task) {
 		if pid != ppid {
 			continue
 		}
+		host := parts[0][6]
+		if filterHost != "" && filterHost != host {
+			continue
+		}
+
 		inode := parts[0][3]
 		uid := parts[0][4]
 		gid := parts[0][5]
-		comm := strconv.QuoteToASCII(parts[0][6])
-		exe := strconv.QuoteToASCII(parts[0][7])
+		comm := strconv.QuoteToASCII(parts[0][7])
+		exe := strconv.QuoteToASCII(parts[0][8])
 		// index 0 is the string that matched
 		taskList = append(taskList,
 			[]Task{
 				Task{
-					Pid:   pid,
-					PPid:  ppid,
-					Inode: inode,
-					Uid:   uid,
-					Gid:   gid,
-					Comm:  comm,
-					Exe:   exe,
+					Pid:      pid,
+					PPid:     ppid,
+					Inode:    inode,
+					Uid:      uid,
+					Gid:      gid,
+					Hostname: host,
+					Comm:     comm,
+					Exe:      exe,
 				},
 			}...)
 	}
@@ -204,7 +212,7 @@ func GetPidList() (taskList []Task) {
 	return taskList
 }
 
-func GetFileList() (fileList []File) {
+func GetFileList(filterHost string) (fileList []File) {
 	iter, found := progHooks[ProgDumpFiles]
 	if !found {
 		log.Debug("iter %s not configured?\n", ProgDumpFiles)
@@ -238,26 +246,32 @@ func GetFileList() (fileList []File) {
 		if pid != ppid {
 			continue
 		}
+		host := parts[0][7]
+		if filterHost != "" && filterHost != host {
+			continue
+		}
+
 		fd := parts[0][3]
 		inode := parts[0][4]
 		uid := parts[0][5]
 		gid := parts[0][6]
-		file := strconv.QuoteToASCII(parts[0][7])
-		comm := strconv.QuoteToASCII(parts[0][8])
-		exe := strconv.QuoteToASCII(parts[0][9])
+		file := strconv.QuoteToASCII(parts[0][8])
+		comm := strconv.QuoteToASCII(parts[0][9])
+		exe := strconv.QuoteToASCII(parts[0][10])
 		// index 0 is the string that matched
 		fileList = append(fileList,
 			[]File{
 				File{
-					Pid:   pid,
-					PPid:  ppid,
-					Inode: inode,
-					Fd:    fd,
-					Uid:   uid,
-					Gid:   gid,
-					File:  file,
-					Comm:  comm,
-					Exe:   exe,
+					Pid:      pid,
+					PPid:     ppid,
+					Inode:    inode,
+					Fd:       fd,
+					Uid:      uid,
+					Gid:      gid,
+					Hostname: host,
+					File:     file,
+					Comm:     comm,
+					Exe:      exe,
 				},
 			}...)
 	}

@@ -64,11 +64,12 @@ int dump_tasks(struct bpf_iter__task *ctx)
         }
     }
 
-    BPF_SEQ_PRINTF(seq, "pid=%d ppid=%d inode=%d uid=%d gid=%d comm=%s exe=%s\n",
+    BPF_SEQ_PRINTF(seq, "pid=%d ppid=%d inode=%d uid=%d gid=%d host=%s comm=%s exe=%s\n",
             pid, ppid,
             inode,
             uid,
             gid,
+            task->nsproxy->uts_ns->name.nodename,
             comm,
             path);
 

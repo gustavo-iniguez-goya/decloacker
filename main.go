@@ -140,14 +140,15 @@ func main() {
 	//	checkAll(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Recursive)
 
 	case "dump files":
-		dlog.Detection("%-10s%-10s%-6s%-8s%-5s%-5s %-16s %s\t%s\n",
-			"Pid", "PPid", "Fd", "Inode", "UID", "GID", "File", "Comm", "Exe")
-		files := ebpf.GetFileList()
+		dlog.Detection("%-10s %-10s %-6s %-8s %-5s %-5s %s %-16s %s\t%s\n",
+			"Pid", "PPid", "Fd", "Inode", "UID", "GID", "Host", "Comm", "File", "Exe")
+		files := ebpf.GetFileList(CLI.Dump.Files.Host)
 		for _, f := range files {
-			dlog.Detection("%-10s%-10s%-6s%-8s%-5s%-5s %-16s %s\t%s\n",
+			dlog.Detection("%-10s %-10s %-6s %-8s %-5s %-5s %s %-16s %s\t%s\n",
 				f.Pid, f.PPid,
 				f.Fd, f.Inode,
 				f.Uid, f.Gid,
+				f.Hostname,
 				f.Comm, f.File, f.Exe,
 			)
 		}
@@ -165,14 +166,15 @@ func main() {
 			)
 		}
 	case "dump tasks":
-		dlog.Detection("%-10s%-10s%-8s%-5s%-5s %-16s %s\n",
-			"Pid", "PPid", "Inode", "UID", "GID", "Comm", "Exe")
-		tasks := ebpf.GetPidList()
+		dlog.Detection("%-10s %-10s %-8s %-5s %-5s %s %-16s %s\n",
+			"Pid", "PPid", "Inode", "UID", "GID", "Host", "Comm", "Exe")
+		tasks := ebpf.GetPidList(CLI.Dump.Tasks.Host)
 		for _, t := range tasks {
-			dlog.Detection("%-10s%-10s%-8s%-5s%-5s %-16s %s\n",
+			dlog.Detection("%-10s %-10s %-8s %-5s %-5s %s %-16s %s\n",
 				t.Pid, t.PPid,
 				t.Inode,
 				t.Uid, t.Gid,
+				t.Hostname,
 				t.Comm, t.Exe,
 			)
 		}

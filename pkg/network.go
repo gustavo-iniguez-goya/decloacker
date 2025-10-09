@@ -80,7 +80,7 @@ func Netstat(protos []string) int {
 		}
 	}
 
-	files := ebpf.GetFileList()
+	files := ebpf.GetFileList("")
 	inodes := make(map[uint32]ebpf.File)
 	for _, f := range files {
 		inode, err := strconv.Atoi(f.Inode)
@@ -117,14 +117,16 @@ func Netstat(protos []string) int {
 			exe := ""
 			pid := ""
 			ppid := ""
+			host := ""
 			if f, found := inodes[s.INode]; found {
 				comm = f.Comm
 				exe = f.Exe
 				pid = f.Pid
 				ppid = f.PPid
+				host = f.Hostname
 			}
 
-			log.Log("%-12s%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s comm=%s exe=%s\n",
+			log.Log("%-12s%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s host=%s comm=%s exe=%s\n",
 				netlink.TCPStatesMap[s.State],
 				"inode", s.INode,
 				"uid", s.UID,
@@ -134,6 +136,7 @@ func Netstat(protos []string) int {
 				s.ID.Destination,
 				s.ID.DestinationPort,
 				pid, ppid,
+				host,
 				comm, exe,
 			)
 		}
