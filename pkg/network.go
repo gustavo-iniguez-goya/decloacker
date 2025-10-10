@@ -4,6 +4,7 @@ import (
 	"golang.org/x/sys/unix"
 	"net"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/evilsocket/opensnitch/daemon/netlink"
@@ -127,7 +128,7 @@ func Netstat(protos []string) int {
 			}
 
 			log.Log("%-12s%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s host=%s comm=%s exe=%s\n",
-				netlink.TCPStatesMap[s.State],
+				strings.ToUpper(netlink.TCPStatesMap[s.State]),
 				"inode", s.INode,
 				"uid", s.UID,
 				"ifname", ifname,
