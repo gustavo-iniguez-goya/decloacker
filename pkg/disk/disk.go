@@ -210,7 +210,7 @@ func Rm(dev string, partition int, paths []string, openMode diskfs.OpenModeOptio
 	return err
 }
 
-func Info(dev string, partition int, paths []string, openMode diskfs.OpenModeOption) ([]os.FileInfo, error) {
+func Stat(dev string, partition int, paths []string, openMode diskfs.OpenModeOption) ([]os.FileInfo, error) {
 	disk, err := diskfs.Open(
 		dev,
 		diskfs.WithOpenMode(openMode),
