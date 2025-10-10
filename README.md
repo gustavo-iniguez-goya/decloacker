@@ -3,7 +3,7 @@
 <p align="center">a simple tool to reveal files, directories and connections hidden by malware.</p>
 
 <p align="center">
-    <img width="794" height="794" alt="decloacker3" src="https://github.com/user-attachments/assets/6f052933-47fe-4784-b34c-3338e0b28fa0" /> 
+    <img width="250" height="250" alt="decloacker3" src="https://github.com/user-attachments/assets/6f052933-47fe-4784-b34c-3338e0b28fa0" /> 
 </p>
 
 <p align="center">•• <a href="#usage">Usage</a> • <a href="#malware-analysis-examples">Malware analysis examples</a> • <a href="#todo">TODO</a> • <a href="#resources">Resources</a> ••</p>
