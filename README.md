@@ -3,7 +3,7 @@
 <p align="center">a simple tool to reveal files, directories and connections hidden by malware.</p>
 
 <p align="center">
-    <img width="250" height="250" alt="decloaker3" src="https://github.com/user-attachments/assets/a824750e-0ec2-4421-a7c5-282b606e0be2" />
+    <img width="794" height="794" alt="decloacker3" src="https://github.com/user-attachments/assets/6f052933-47fe-4784-b34c-3338e0b28fa0" /> 
 </p>
 
 <p align="center">•• <a href="#usage">Usage</a> • <a href="#malware-analysis-examples">Malware analysis examples</a> • <a href="#todo">TODO</a> • <a href="#resources">Resources</a> ••</p>
@@ -72,7 +72,7 @@ Scan the system to unhide files, directories, processes or kernel rootkits.
     Look for hidden processes.
 ```
 
-Dump connections, processes, opened files or kernel modules directly from the kernel, without parsing /proc/net/*:
+Dump connections, processes, opened files or kernel modules directly from the kernel, without parsing /proc/*:
 
 ```bash
   netstat [<protos> ...] [flags]
@@ -105,6 +105,8 @@ Dump connections, processes, opened files or kernel modules directly from the ke
 - [ ] Scan eBPF modules.
 
 ### Malware analysis examples
+
+More analyses here: https://github.com/gustavo-iniguez-goya/decloaker/discussions/categories/malware-analysis
 
 #### Father (LD_PRELOAD rootkit)
 
