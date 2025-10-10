@@ -1,11 +1,11 @@
-package decloacker
+package decloaker
 
 import (
 	"os"
 	"syscall"
 	"time"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 )
 
 func Exists(path string) bool {

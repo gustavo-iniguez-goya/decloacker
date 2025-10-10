@@ -1,4 +1,4 @@
-package decloacker
+package decloaker
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 )
 
 const (
@@ -220,7 +220,7 @@ func CheckHiddenProcs(doBruteForce bool) int {
 		}
 	}
 	if ret == OK {
-		log.Info("No hidden processes found. You can try it with \"decloacker scan hidden-procs --brute-force\"\n\n")
+		log.Info("No hidden processes found. You can try it with \"decloaker scan hidden-procs --brute-force\"\n\n")
 	}
 
 	return ret

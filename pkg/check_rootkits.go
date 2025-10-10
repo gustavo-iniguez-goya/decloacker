@@ -1,4 +1,4 @@
-package decloacker
+package decloaker
 
 import (
 	"bytes"
@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 )
 
 type taintT struct {

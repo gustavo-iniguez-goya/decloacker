@@ -1,4 +1,4 @@
-package decloacker
+package decloaker
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ import (
 	//"github.com/diskfs/go-diskfs/disk"
 	//"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/ext4"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 )
 
 // functions to read files directly from the disk device.

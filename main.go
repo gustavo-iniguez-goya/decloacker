@@ -1,19 +1,19 @@
 /*   Copyright (C) 2025 Gustavo Iñiguez Goya
 //
-//   This file is part of decloacker.
+//   This file is part of decloaker.
 //
-//   decloacker is free software: you can redistribute it and/or modify
+//   decloaker is free software: you can redistribute it and/or modify
 //   it under the terms of the GNU General Public License as published by
 //   the Free Software Foundation, either version 3 of the License, or
 //   (at your option) any later version.
 //
-//   decloacker is distributed in the hope that it will be useful,
+//   decloaker is distributed in the hope that it will be useful,
 //   but WITHOUT ANY WARRANTY; without even the implied warranty of
 //   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //   GNU General Public License for more details.
 //
 //   You should have received a copy of the GNU General Public License
-//   along with decloacker.  If not, see <http://www.gnu.org/licenses/>.
+//   along with decloaker.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package main
@@ -25,16 +25,16 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/diskfs/go-diskfs"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg"
-	disk "github.com/gustavo-iniguez-goya/decloacker/pkg/disk"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
-	dlog "github.com/gustavo-iniguez-goya/decloacker/pkg/log"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg"
+	disk "github.com/gustavo-iniguez-goya/decloaker/pkg/disk"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
+	dlog "github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
 )
 
 func main() {
 	ctx := kong.Parse(&CLI,
-		kong.Name("decloacker"),
+		kong.Name("decloaker"),
 		kong.Description("A generic malware unmasker"),
 		kong.UsageOnError(),
 	)
@@ -50,41 +50,41 @@ func main() {
 
 	ebpf.ConfigureIters(CLI.PinKernelLists)
 
-	var ret = decloacker.OK
+	var ret = decloaker.OK
 
 	switch ctx.Command() {
 	//case "log <format> <output>":
 	//	fmt.Printf("log format: %s, file: %s\n", CLI.Log.Format, CLI.Log.Output)
 	case "cp <orig> <dest>":
-		ret = decloacker.Copy(CLI.Cp.Orig, CLI.Cp.Dest)
+		ret = decloaker.Copy(CLI.Cp.Orig, CLI.Cp.Dest)
 	case "rm <paths>":
-		ret = decloacker.Delete(CLI.Rm.Paths)
+		ret = decloaker.Delete(CLI.Rm.Paths)
 	case "ls <paths>":
 		printLs(CLI.Ls.ShowExtendedInfo)
 	case "mv <orig> <dest>":
-		ret = decloacker.Rename(CLI.Mv.Orig, CLI.Mv.Dest)
+		ret = decloaker.Rename(CLI.Mv.Orig, CLI.Mv.Dest)
 	case "cat <paths>":
-		ret = decloacker.Cat(CLI.Cat.Paths)
+		ret = decloaker.Cat(CLI.Cat.Paths)
 	case "stat <paths>":
-		decloacker.PrintStat(CLI.Stat.Paths)
+		decloaker.PrintStat(CLI.Stat.Paths)
 
 	case "netstat <protos>":
-		ret = decloacker.Netstat(CLI.Netstat.Protos)
+		ret = decloaker.Netstat(CLI.Netstat.Protos)
 	case "netstat":
-		ret = decloacker.Netstat([]string{"all"})
+		ret = decloaker.Netstat([]string{"all"})
 
 	case "conntrack list":
-		decloacker.Conntrack()
+		decloaker.Conntrack()
 
 	case "disk ls <paths>":
-		orig, expected := decloacker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, CLI.Disk.Ls.Recursive)
+		orig, expected := decloaker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, CLI.Disk.Ls.Recursive)
 		expected = disk.ReadDir(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Ls.Paths[0], diskfs.ReadOnly, CLI.Disk.Ls.Recursive)
-		ret = decloacker.CompareFiles(orig, expected)
+		ret = decloaker.CompareFiles(orig, expected)
 	case "disk cp <orig> <dest>":
 		err := disk.Cp(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Cp.Orig, CLI.Disk.Cp.Dest, diskfs.ReadOnly)
 		if err != nil {
 			dlog.Error("%s\n", err)
-			ret = decloacker.ERROR
+			ret = decloaker.ERROR
 		} else {
 			dlog.Ok("OK\n")
 		}
@@ -93,14 +93,14 @@ func main() {
 		err := disk.Mv(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Cp.Orig, CLI.Disk.Cp.Dest, diskfs.ReadOnly)
 		if err != nil {
 			dlog.Error("%s\n", err)
-			ret = decloacker.ERROR
+			ret = decloaker.ERROR
 		} else {
 			dlog.Ok("OK\n")
 		}
 	case "disk stat <paths>":
 		list, err := disk.Stat(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Stat.Paths, diskfs.ReadOnly)
 		if err != nil {
-			ret = decloacker.ERROR
+			ret = decloaker.ERROR
 			dlog.Error("%s\n", err)
 		} else {
 			for _, file := range list {
@@ -112,7 +112,7 @@ func main() {
 		content, err := disk.ReadFile(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Cat.Path)
 		if err != nil {
 			dlog.Error("%s\n", err)
-			ret = decloacker.ERROR
+			ret = decloaker.ERROR
 		} else {
 			dlog.Ok("cat %s:\n\n", CLI.Disk.Cat.Path)
 			dlog.Detection("%s", content)
@@ -123,19 +123,19 @@ func main() {
 		err := disk.Rm(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Rm.Paths, diskfs.ReadWrite)
 		if err != nil {
 			dlog.Error("%s\n", err)
-			ret = decloacker.ERROR
+			ret = decloaker.ERROR
 		} else {
 			dlog.Ok("rm %v\n\n", CLI.Disk.Rm.Paths)
 		}
 
 	case "scan hidden-files <paths>":
-		ret = decloacker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Tool, CLI.Scan.HiddenFiles.Recursive)
+		ret = decloaker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Tool, CLI.Scan.HiddenFiles.Recursive)
 	case "scan hidden-content <paths>":
-		ret = decloacker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
+		ret = decloaker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
 	case "scan hidden-lkms":
-		ret = decloacker.CheckHiddenLKM()
+		ret = decloaker.CheckHiddenLKM()
 	case "scan hidden-procs":
-		ret = decloacker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
+		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
 	//case "scan all":
 	//	checkAll(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Recursive)
 
@@ -188,7 +188,7 @@ func main() {
 	default:
 		fmt.Println("No command specified, showing help:", ctx.Command())
 		ctx.PrintUsage(true)
-		ret = decloacker.ERROR
+		ret = decloaker.ERROR
 	}
 
 	ebpf.CleanupIters()
@@ -197,7 +197,7 @@ func main() {
 
 func printLs(showExtendedInfo bool) {
 	for _, p := range CLI.Ls.Paths {
-		_, ls := decloacker.ListFiles(p, sys.CmdLs, CLI.Ls.Recursive)
+		_, ls := decloaker.ListFiles(p, sys.CmdLs, CLI.Ls.Recursive)
 		total := len(ls)
 		for f, stat := range ls {
 			if stat == nil {
@@ -206,7 +206,7 @@ func printLs(showExtendedInfo bool) {
 			}
 			dlog.Detection("%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
 			if showExtendedInfo {
-				decloacker.PrintFileExtendedInfo(stat.Sys())
+				decloaker.PrintFileExtendedInfo(stat.Sys())
 			}
 		}
 		dlog.Log("\n")

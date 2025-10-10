@@ -1,4 +1,4 @@
-package decloacker
+package decloaker
 
 import (
 	"golang.org/x/sys/unix"
@@ -8,8 +8,8 @@ import (
 	"syscall"
 
 	"github.com/evilsocket/opensnitch/daemon/netlink"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/ebpf"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 
 	ntl "github.com/vishvananda/netlink"
 )

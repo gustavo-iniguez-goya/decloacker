@@ -5,13 +5,13 @@ prepare:
 ebpf:
 	@cd pkg/ebpf/kern/ && make
 
-decloacker:
-	CGO_ENABLED=0 go build -o bin/decloacker
+decloaker:
+	CGO_ENABLED=0 go build -o bin/decloaker
 
-all: prepare ebpf decloacker
+all: prepare ebpf decloaker
 
 clean:
-	rm -f bin/decloacker
+	rm -f bin/decloaker
 	@cd pkg/ebpf/kern && make clean
 
 .DEFAULT_GOAL := all

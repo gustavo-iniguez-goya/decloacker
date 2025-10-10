@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg"
 )
 
 type VersionFlag string
@@ -13,8 +13,8 @@ type VersionFlag string
 func (v VersionFlag) Decode(_ *kong.DecodeContext) error { return nil }
 func (v VersionFlag) IsBool() bool                       { return true }
 func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
-	fmt.Printf("decloacker - %s\n%s\n\n",
-		decloacker.Version, decloacker.License)
+	fmt.Printf("decloaker - %s\n%s\n\n",
+		decloaker.Version, decloaker.License)
 	os.Exit(0)
 	return nil
 }
@@ -24,7 +24,7 @@ var CLI struct {
 	Version        VersionFlag `help:"Print version"`
 	Format         string      `short:"f" help:"" global:""`
 	LogLevel       string      `help:"log level (debug,info,warn,error,detection). Use detection to display only detections" default:"info" enum:"debug,info,warning,error,detection"`
-	PinKernelLists bool        `help:"Make kernel lists permanent (kmods, pids, ...). They'll be available in /sys/fs/bpf/decloacker/tasks and /sys/fs/bpf/decloacker/kmods."`
+	PinKernelLists bool        `help:"Make kernel lists permanent (kmods, pids, ...). They'll be available in /sys/fs/bpf/decloaker/tasks and /sys/fs/bpf/decloaker/kmods."`
 	//Output  string `short:"o" help:"" global:""`
 	//LogDate bool   `global:""`
 	//LogTime bool   `global:""`
@@ -120,7 +120,7 @@ var CLI struct {
 			Paths     []string `arg:"" help:"Path to scan." required:"" name:"paths" type:"path"`
 			Recursive bool     `short:"r" help:"Enable deep scanning."`
 		} `cmd:"" help:"Scan a path." hidden:""`
-	} `cmd:"" help:"Commands to decloack files, directories or kernel modules."`
+	} `cmd:"" help:"Commands to decloak files, directories or kernel modules."`
 
 	Dump struct {
 		Files struct {

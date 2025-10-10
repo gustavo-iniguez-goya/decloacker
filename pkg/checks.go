@@ -1,11 +1,11 @@
-package decloacker
+package decloaker
 
 import (
 	"io/fs"
 	"os"
 	"time"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 )
 
 // CompareFiles checks if 2 directories have the same number of files
@@ -68,7 +68,7 @@ func CompareFiles(orig, expected map[string]os.FileInfo) int {
 			log.Debug("\t(stat not available) %s\n", h)
 		}
 		log.Log("\n")
-		log.Info("use \"%s\" to backup the files, or \"%s\" to delete them", "decloacker disk cp <orig> <dest>", "decloacker disk rm <path>")
+		log.Info("use \"%s\" to backup the files, or \"%s\" to delete them", "decloaker disk cp <orig> <dest>", "decloaker disk rm <path>")
 		log.Log("\n\n")
 	} else {
 		log.Log("\n")

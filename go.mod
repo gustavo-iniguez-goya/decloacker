@@ -1,4 +1,4 @@
-module github.com/gustavo-iniguez-goya/decloacker
+module github.com/gustavo-iniguez-goya/decloaker
 
 go 1.24.0
 

@@ -13,7 +13,7 @@ import (
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/rlimit"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 )
 
 //go:embed kern/dump_tasks.o
@@ -31,10 +31,10 @@ var dumpFiles []byte
 var dumpKmod []byte
 
 var (
-	LiveDir   = "/sys/fs/bpf/decloacker"
-	TasksPath = "/sys/fs/bpf/decloacker/tasks"
-	FilesPath = "/sys/fs/bpf/decloacker/files"
-	KmodsPath = "/sys/fs/bpf/decloacker/kmods"
+	LiveDir   = "/sys/fs/bpf/decloaker"
+	TasksPath = "/sys/fs/bpf/decloaker/tasks"
+	FilesPath = "/sys/fs/bpf/decloaker/files"
+	KmodsPath = "/sys/fs/bpf/decloaker/kmods"
 	reTasks   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\shost=([0-9A-Za-z_-]+)\scomm=(.{0,16})\sexe=(.*)$`)
 	reFiles   = regexp.MustCompile(`pid=([0-9]+)\sppid=([0-9]+)\sfd=([0-9]+)\sinode=([0-9]+)\suid=([0-9]+)\sgid=([0-9]+)\shost=([0-9A-Za-z_-]+)\sfile=(.*)\scomm=(.{0,16})\sexe=(.*)$`)
 	// addr=0xffffffffc4668010 atype=T func=hide_proc_modules_init name=lab_hide type=FTRACE_MOD 0x8000
@@ -91,7 +91,7 @@ type Kmod struct {
 
 func ConfigureIters(pinIters bool) {
 	if os.Getuid() != 0 {
-		log.Warn("[eBPF] execute decloacker as root to use eBPF functionality.\n")
+		log.Warn("[eBPF] execute decloaker as root to use eBPF functionality.\n")
 		return
 	}
 	if err := rlimit.RemoveMemlock(); err != nil {
@@ -147,7 +147,7 @@ func ConfigureIters(pinIters bool) {
 }
 
 // GetPidList dumps the tasks that are active in the kernel.
-// The list can be read in /sys/fs/bpf/decloacker/tasks
+// The list can be read in /sys/fs/bpf/decloaker/tasks
 // since kernel 5.9
 func GetPidList(filterHost string) (taskList []Task) {
 	iter, found := progHooks[ProgDumpTasks]
@@ -280,7 +280,7 @@ func GetFileList(filterHost string) (fileList []File) {
 }
 
 // GetKmodList dumps the kernel modules that are active in the kernel.
-// The list can be read in /sys/fs/bpf/decloacker/kmods
+// The list can be read in /sys/fs/bpf/decloaker/kmods
 // since kernel 6.0
 func GetKmodList() map[string]Kmod {
 	kmodList := make(map[string]Kmod)

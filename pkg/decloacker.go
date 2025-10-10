@@ -1,4 +1,4 @@
-package decloacker
+package decloaker
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
 )
 
 var (
@@ -195,7 +195,7 @@ func ListFiles(path string, tool string, deep bool) (map[string]os.FileInfo, map
 	} else {
 		lsDirs = sys.Find(path, args...)
 	}
-	log.Debug("Listing files with decloacker ... \n")
+	log.Debug("Listing files with decloaker ... \n")
 	list := ReadDir(path, deep)
 
 	return lsDirs, list

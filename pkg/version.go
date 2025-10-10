@@ -1,4 +1,4 @@
-package decloacker
+package decloaker
 
 import "fmt"
 

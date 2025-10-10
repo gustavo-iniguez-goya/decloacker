@@ -1,16 +1,16 @@
-# decloacker
+# decloaker
 
 <p align="center">a simple tool to reveal files, directories and connections hidden by malware.</p>
 
 <p align="center">
-    <img width="250" height="250" alt="decloacker3" src="https://github.com/user-attachments/assets/a824750e-0ec2-4421-a7c5-282b606e0be2" />
+    <img width="250" height="250" alt="decloaker3" src="https://github.com/user-attachments/assets/a824750e-0ec2-4421-a7c5-282b606e0be2" />
 </p>
 
 <p align="center">•• <a href="#usage">Usage</a> • <a href="#malware-analysis-examples">Malware analysis examples</a> • <a href="#todo">TODO</a> • <a href="#resources">Resources</a> ••</p>
 
 ### Usage
 
-tl;dr: `./bin/decloacker --help`
+tl;dr: `./bin/decloaker --help`
 
 There're 4 main areas:
 
@@ -120,8 +120,8 @@ root@localhost:~#
 ```
 
 ```bash
-root@localhost:~# /home/ga/decloacker scan hidden-content /etc/ld.so.preload
-decloacker v0.0, pid: 763609
+root@localhost:~# /home/ga/decloaker scan hidden-content /etc/ld.so.preload
+decloaker v0.0, pid: 763609
 
 [i] Checking for hidden content /etc/ld.so.preload
 
@@ -147,8 +147,8 @@ root@localhost:~#
 Using Go's standard lib (i.e.: using syscalls directly, without libc):
 
 ```bash
-root@localhost:~# /home/ga/decloacker scan hidden-files --recursive /home/ga/rootkits/ld_preload/Father/
-decloacker v0.0, pid: 764851
+root@localhost:~# /home/ga/decloaker scan hidden-files --recursive /home/ga/rootkits/ld_preload/Father/
+decloaker v0.0, pid: 764851
 
 [i] Checking hidden files ["/home/ga/rootkits/ld_preload/Father/"]
 
@@ -167,7 +167,7 @@ HIDDEN dirs/files found:
 	-rw-rw-r--	0	2025-09-25T16:07:16+01:00	/home/ga/rootkits/ld_preload/Father/lobster/file2.txt
 	-rw-rw-r--	0	2025-09-25T16:07:16+01:00	/home/ga/rootkits/ld_preload/Father/lobster/file3.txt
 
-[i] use decloacker cp <orig> <dest> to backup the files, or decloacker rm <path> to delete them
+[i] use decloaker cp <orig> <dest> to backup the files, or decloaker rm <path> to delete them
 
 root@localhost:~#
 ```
@@ -175,8 +175,8 @@ root@localhost:~#
 ```bash
 root@localhost:~# rm /etc/ld.so.preload
 rm: cannot remove '/etc/ld.so.preload': No such file or directory
-root@localhost:~# /home/ga/decloacker rm /etc/ld.so.preload
-decloacker v0.0, pid: 765449
+root@localhost:~# /home/ga/decloaker rm /etc/ld.so.preload
+decloaker v0.0, pid: 765449
 
 [i] Deleting files [/etc/ld.so.preload]
 	/etc/ld.so.preload:	OK
@@ -222,10 +222,10 @@ diamorphine.h  diamorphine.mod	diamorphine.mod.o  LICENSE.txt	  modules.order  R
 root@localhost:~#
 ```
 
-Try to list the files with decloacker `disk ls` tool:
+Try to list the files with decloaker `disk ls` tool:
 
 ```bash
-root@localhost:~# /home/ga/decloacker --log-level detection disk ls -d /dev/sda1 /home/ga/Diamorphine/
+root@localhost:~# /home/ga/decloaker --log-level detection disk ls -d /dev/sda1 /home/ga/Diamorphine/
 
 HIDDEN dirs/files found:
 
@@ -250,8 +250,8 @@ root@localhost:~#
 Let's try to unhide these processes:
 
 ```bash
-root@localhost:~# /home/ga/decloacker scan hidden-procs
-decloacker v0.0, pid: 763693
+root@localhost:~# /home/ga/decloaker scan hidden-procs
+decloaker v0.0, pid: 763693
 
 [i] Checking hidden processes:
 
@@ -286,8 +286,8 @@ root@localhost:~#
 See if we can reveal it:
 
 ```bash
-root@localhost:~# /home/ga/decloacker scan hidden-lkms
-decloacker v0.0, pid: 763715
+root@localhost:~# /home/ga/decloaker scan hidden-lkms
+decloaker v0.0, pid: 763715
 
 [i] Checking kernel integrity
 WARNING: kernel tainted
@@ -303,7 +303,7 @@ tainted: d diamorphine/, OE
 root@localhost:~# 
 ```
 
-You can also use `decloacker disk --dev=/dev/sda1 cp /path/to/hidden_file.txt hidden_file_backup.txt` (only for ext4 filesystems).
+You can also use `decloaker disk --dev=/dev/sda1 cp /path/to/hidden_file.txt hidden_file_backup.txt` (only for ext4 filesystems).
 
 ### Resources
 

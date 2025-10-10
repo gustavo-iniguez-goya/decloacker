@@ -1,12 +1,12 @@
-package decloacker
+package decloaker
 
 import (
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/gustavo-iniguez-goya/decloacker/pkg/log"
-	sys "github.com/gustavo-iniguez-goya/decloacker/pkg/sys"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	sys "github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
 )
 
 // XXX: a file may have changed when reading it with cat and later with syscalls.
