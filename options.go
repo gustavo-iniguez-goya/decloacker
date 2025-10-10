@@ -92,7 +92,7 @@ var CLI struct {
 		Rm struct {
 			Paths []string `arg:"" help:"Paths to delete. WARNING, DANGEROUS OPERATION, DO NOT USE" required:"" name:"paths" type:"path"`
 		} `cmd:"" help:"Delete files directly from the disk device" hidden:""`
-		Info struct {
+		Stat struct {
 			Paths []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
 		} `cmd:"" help:"Return information about a path"`
 		Cat struct {

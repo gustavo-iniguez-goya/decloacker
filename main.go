@@ -97,8 +97,8 @@ func main() {
 		} else {
 			dlog.Ok("OK\n")
 		}
-	case "disk info <paths>":
-		list, err := disk.Info(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Info.Paths, diskfs.ReadWrite)
+	case "disk stat <paths>":
+		list, err := disk.Stat(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Stat.Paths, diskfs.ReadOnly)
 		if err != nil {
 			ret = decloacker.ERROR
 			dlog.Error("%s\n", err)
