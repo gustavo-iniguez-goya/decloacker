@@ -2,6 +2,10 @@
 
 <p align="center">a simple tool to reveal files, directories and connections hidden by malware.</p>
 
+<p align="center">
+    <img width="250" height="250" alt="decloacker3" src="https://github.com/user-attachments/assets/a824750e-0ec2-4421-a7c5-282b606e0be2" />
+</p>
+
 <p align="center">•• <a href="#usage">Usage</a> • <a href="#malware-analysis-examples">Malware analysis examples</a> • <a href="#todo">TODO</a> • <a href="#resources">Resources</a> ••</p>
 
 ### Usage
@@ -45,11 +49,14 @@ List, copy or get info of directories and files by accessing directly the disk d
   disk cp --dev=STRING <orig> <dest> [flags]
     Copy directories and files directly from the disk device
 
-  disk info --dev=STRING <paths> ... [flags]
+  disk stat --dev=STRING <paths> ... [flags]
     Return information about a path
+
+  disk cat --dev=STRING <path> [flags]
+    Reads the content of a file and prints it to stdout
 ```
 
-Execute actions to unhide files, directories, processes or kernel rootkits.
+Scan the system to unhide files, directories, processes or kernel rootkits.
    
 ```bash
   scan hidden-files <paths> ... [flags]
@@ -65,7 +72,7 @@ Execute actions to unhide files, directories, processes or kernel rootkits.
     Look for hidden processes.
 ```
 
-Dump connections directly from the kernel, without parsing /proc/net/*:
+Dump connections, processes, opened files or kernel modules directly from the kernel, without parsing /proc/net/*:
 
 ```bash
   netstat [<protos> ...] [flags]
@@ -73,6 +80,15 @@ Dump connections directly from the kernel, without parsing /proc/net/*:
 
   conntrack list
     Dump conntrack connections table from kernel.
+
+  dump files [flags]
+    Dump opened files.
+
+  dump kmods
+    Dump loaded kernel modules.
+
+  dump tasks [flags]
+    Dump running tasks (processes).
 ```
 
 
@@ -81,10 +97,11 @@ Dump connections directly from the kernel, without parsing /proc/net/*:
 - [ ] Add a cli option to scan the system with all the IOCs options.
 - [ ] Read options from a configuration file.
 - [ ] Dump logs in json and structured text.
-- [ ] Add more options to scan for malicious lkms.
 - [ ] Compare connections listed in /proc/net/* as well as the output of netstat/ss/lsof, with the connections found in kernel.
 - [ ] Display the differences when scanning with `scan hidden-content`.
-- [ ] Display what processes opened the existing sockets.
+- [x] Display what processes opened the existing sockets.
+      - 1/2 done: does not work for connections opened in containers.
+
 - [ ] Scan eBPF modules.
 
 ### Malware analysis examples
@@ -284,9 +301,9 @@ tainted: d diamorphine/, OE
 	WARNING: "diamorphine" kmod HIDDEN from /proc/modules
 
 root@localhost:~# 
+```
 
 You can also use `decloacker disk --dev=/dev/sda1 cp /path/to/hidden_file.txt hidden_file_backup.txt` (only for ext4 filesystems).
-```
 
 ### Resources
 
