@@ -118,10 +118,10 @@ var CLI struct {
 		} `cmd:"" help:"Look for hidden processes."`
 
 		// TODO
-		All struct {
-			Paths     []string `arg:"" help:"Path to scan." required:"" name:"paths" type:"path"`
-			Recursive bool     `short:"r" help:"Enable deep scanning."`
-		} `cmd:"" help:"Scan a path." hidden:""`
+		System struct {
+			//Paths     []string `arg:"" help:"Path to scan." required:"" name:"paths" type:"path"`
+			//Recursive bool     `short:"r" help:"Enable deep scanning."`
+		} `cmd:"" help:"Scan a path."`
 	} `cmd:"" help:"Commands to decloak files, directories or kernel modules."`
 
 	Dump struct {

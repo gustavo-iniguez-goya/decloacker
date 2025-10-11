@@ -129,35 +129,22 @@ func main() {
 		}
 
 	case "scan hidden-files":
-		if CLI.Scan.WithBuiltinPaths {
-			paths := decloaker.ExpandPaths(decloaker.DefaultHiddenFilesPaths)
-			CLI.Scan.HiddenFiles.Paths = append(CLI.Scan.HiddenFiles.Paths, paths...)
-			CLI.Scan.HiddenFiles.Recursive = true
-		}
-		if len(CLI.Scan.HiddenFiles.Paths) == 0 {
-			dlog.Error("no paths supplied")
-			return
-		}
-
-		ret = decloaker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Tool, CLI.Scan.HiddenFiles.Recursive)
+		ret = scanHiddenFiles()
 
 	case "scan hidden-content":
-		if CLI.Scan.WithBuiltinPaths {
-			paths := decloaker.ExpandPaths(decloaker.DefaultHiddenContentPaths)
-			CLI.Scan.HiddenContent.Paths = append(CLI.Scan.HiddenContent.Paths, paths...)
-		}
-		if len(CLI.Scan.HiddenContent.Paths) == 0 {
-			dlog.Error("no paths supplied")
-			return
-		}
+		ret = scanHiddenContent()
 
-		ret = decloaker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
 	case "scan hidden-lkms":
 		ret = decloaker.CheckHiddenLKM()
 	case "scan hidden-procs":
 		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
-	//case "scan all":
-	//	checkAll(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Recursive)
+	case "scan system":
+		CLI.Scan.WithBuiltinPaths = true
+		CLI.Scan.HiddenFiles.Recursive = true
+		scanHiddenFiles()
+		scanHiddenContent()
+		ret = decloaker.CheckHiddenLKM()
+		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
 
 	case "dump files":
 		dlog.Detection("%-10s %-10s %-6s %-8s %-5s %-5s %s %-16s %s\t%s\n",
@@ -213,6 +200,35 @@ func main() {
 
 	ebpf.CleanupIters()
 	os.Exit(ret)
+}
+
+// =========================================================================
+
+func scanHiddenFiles() int {
+	if CLI.Scan.WithBuiltinPaths {
+		paths := decloaker.ExpandPaths(decloaker.DefaultHiddenFilesPaths)
+		CLI.Scan.HiddenFiles.Paths = append(CLI.Scan.HiddenFiles.Paths, paths...)
+		CLI.Scan.HiddenFiles.Recursive = true
+	}
+	if len(CLI.Scan.HiddenFiles.Paths) == 0 {
+		dlog.Error("no paths supplied")
+		return 1
+	}
+
+	return decloaker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Tool, CLI.Scan.HiddenFiles.Recursive)
+}
+
+func scanHiddenContent() int {
+	if CLI.Scan.WithBuiltinPaths {
+		paths := decloaker.ExpandPaths(decloaker.DefaultHiddenContentPaths)
+		CLI.Scan.HiddenContent.Paths = append(CLI.Scan.HiddenContent.Paths, paths...)
+	}
+	if len(CLI.Scan.HiddenContent.Paths) == 0 {
+		dlog.Error("no paths supplied")
+		return 1
+	}
+
+	return decloaker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
 }
 
 func printLs(showExtendedInfo bool) {
