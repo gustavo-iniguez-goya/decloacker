@@ -101,13 +101,15 @@ var CLI struct {
 	} `cmd:"" help:"Read files directly from the disk device."`
 
 	Scan struct {
+		WithBuiltinPaths bool `short:"w" optional:"" help:"Scan only important paths: /etc/ /usr/ /lib/ /tmp/, etc"`
+
 		HiddenFiles struct {
-			Paths     []string `arg:"" help:"Paths to scan. Use /proc to analyze processes." required:"" name:"paths" type:"path"`
+			Paths     []string `arg:"" optional:"" help:"Paths to scan. Use /proc to analyze processes." name:"paths" type:"path"`
 			Tool      string   `short:"t" optional:"" enum:"ls,find" default:"find" help:"System command to enumerate files and directories: ls, find."`
 			Recursive bool     `short:"r" help:"Enable deep scanning."`
 		} `cmd:"" help:"Look for hidden files, directories or processes (libc vs Go's std lib vs mmap)."`
 		HiddenContent struct {
-			Paths []string `arg:"" help:"Paths to scan." required:"" name:"paths" type:"path"`
+			Paths []string `arg:"" optional:"" help:"Paths to scan." name:"paths" type:"path"`
 		} `cmd:"" help:"Open a file and check if it has hidden content (libc vs Go's std lib vs mmap)."`
 		HiddenLkms struct {
 		} `cmd:"" help:"Look for hidden kernel modules."`

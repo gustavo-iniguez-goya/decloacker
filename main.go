@@ -128,9 +128,29 @@ func main() {
 			dlog.Ok("rm %v\n\n", CLI.Disk.Rm.Paths)
 		}
 
-	case "scan hidden-files <paths>":
+	case "scan hidden-files":
+		if CLI.Scan.WithBuiltinPaths {
+			paths := decloaker.ExpandPaths(decloaker.DefaultHiddenFilesPaths)
+			CLI.Scan.HiddenFiles.Paths = append(CLI.Scan.HiddenFiles.Paths, paths...)
+			CLI.Scan.HiddenFiles.Recursive = true
+		}
+		if len(CLI.Scan.HiddenFiles.Paths) == 0 {
+			dlog.Error("no paths supplied")
+			return
+		}
+
 		ret = decloaker.CheckHiddenFiles(CLI.Scan.HiddenFiles.Paths, CLI.Scan.HiddenFiles.Tool, CLI.Scan.HiddenFiles.Recursive)
-	case "scan hidden-content <paths>":
+
+	case "scan hidden-content":
+		if CLI.Scan.WithBuiltinPaths {
+			paths := decloaker.ExpandPaths(decloaker.DefaultHiddenContentPaths)
+			CLI.Scan.HiddenContent.Paths = append(CLI.Scan.HiddenContent.Paths, paths...)
+		}
+		if len(CLI.Scan.HiddenContent.Paths) == 0 {
+			dlog.Error("no paths supplied")
+			return
+		}
+
 		ret = decloaker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
 	case "scan hidden-lkms":
 		ret = decloaker.CheckHiddenLKM()

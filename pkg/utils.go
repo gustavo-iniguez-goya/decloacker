@@ -2,6 +2,7 @@ package decloaker
 
 import (
 	"os"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -72,4 +73,17 @@ func PrintFileExtendedInfo(st any) {
 		time.Unix(statt.Ctim.Sec, statt.Ctim.Nsec),
 	)
 
+}
+
+func ExpandPaths(pathList []string) []string {
+	paths := []string{}
+	for _, p := range pathList {
+		ps, err := filepath.Glob(p)
+		if err != nil {
+			continue
+		}
+		paths = append(paths, ps...)
+	}
+
+	return paths
 }
