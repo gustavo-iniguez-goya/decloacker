@@ -10,12 +10,12 @@
 
 ### Usage
 
-tl;dr: `./bin/decloaker log-level detection scan system`
+tl;dr: `./bin/decloaker --log-level detection scan system`
 
 There're four main areas:
 
 cat, list, move, delete or copy files without the libc.
-  - Useful for LD_PRELOAD based rootkits.
+  - Useful for LD_PRELOAD based rootkits. Use these commands instead of system `cp`, `rm`, `ls`, `mv`, `cat` or `stat` to manipulate files.
 
 ```bash
   cp [<orig> [<dest>]] [flags]
@@ -34,7 +34,7 @@ cat, list, move, delete or copy files without the libc.
 List, copy or get info of directories and files by accessing directly the disk device (only ext4 filesystems).
 
    - These options help to manipulate files or directories hidden by some kernel rootkits (like Diamorphine).
-   - NOTE: only available for ext4 filesystems.
+   - NOTE: only available for ext4 filesystems for now. Can be added other filesystems like SquashFS.
    - NOTE: this feature does not work on tmpfs, so if /tmp is mounted on tmpfs, it won't find hidden files/directories.
      it'll work for LD_PRELOAD rootkits, and some kernel rootkits.
 
@@ -207,12 +207,12 @@ It can also hide processes, by sending them the signal `-31`. We'll hide these p
 ```bash
 
 root@localhost:~# sleep 99999 &
-[1] 1093
+[1] 1203
 root@localhost:~# sleep 99999 &
-[1] 1094
+[1] 1204
 root@localhost:~# pgrep sleep
-1093
-1094
+1203
+1204
 root@localhost:~#
 ```
 
@@ -245,12 +245,12 @@ root@localhost:~#
 Now we'll hide the processes:
 
 ```bash
-root@localhost:~# kill -31 1093
-root@localhost:~# kill -31 1094
+root@localhost:~# kill -31 1203
+root@localhost:~# kill -31 1204
 root@localhost:~# pgrep -a sleep
 root@localhost:~# 
-root@localhost:~# ls /proc/|grep 2374
-root@localhost:~# ls /proc/|grep 756572
+root@localhost:~# ls /proc/|grep 1204
+root@localhost:~# ls /proc/|grep 1203
 root@localhost:~#
 ```
 
@@ -258,30 +258,65 @@ Let's try to unhide these processes:
 
 ```bash
 root@localhost:~# /home/ga/decloaker scan hidden-procs
-decloaker v0.0, pid: 763693
-
 [i] Checking hidden processes:
 
+dr-xr-xr-x	0	2025-10-12T19:07:20+01:00	/proc/1
 (...)
+dr-xr-xr-x	0	2025-10-12T19:07:20+01:00	/proc/17
 
-[i] 	files checked (140/139)
+[i] 	files checked (151/150)
 [i] 	no hidden dirs/files found
 
-[i] trying with brute force (pid max: 4194304):
-WARNING: hidden proc? /proc/1093
+WARNING (ebpf): pid hidden?
+	PID: 1203	PPid: 1203
+	Inode: 946157	Uid: 0	Gid: 0
+	Comm: "sleep"
+	Path: ""
 
-	exe: /usr/bin/sleep
-	comm: sleep
-	cmdline: sleep99999
+	PID confirmed via Stat: 1203, "sleep"
 
-WARNING: hidden proc? /proc/1094
+[i] Stat /proc/1203:
+dr-xr-xr-x	0	2025-10-12T19:07:48+01:00	1203
 
-	exe: /usr/bin/sleep
-	comm: sleep
-	cmdline: sleep99999
+	Size: 0 	Block size: 1024 	Blocks: 0
+	Device: 21 	Rdev: 0 	Inode: 20865 	Links: 9
+	UID: 0 GID: 0
+	Access: 2025-10-12 19:07:48.916 +0100 BST
+	Modify: 2025-10-12 19:07:48.916 +0100 BST
+	Change: 2025-10-12 19:07:48.916 +0100 BST
+
+
+WARNING (ebpf): pid hidden?
+	PID: 1204	PPid: 1204
+	Inode: 946157	Uid: 0	Gid: 0
+	Comm: "sleep"
+	Path: ""
+
+	PID confirmed via Stat: 1204, "sleep"
+
+[i] Stat /proc/1204:
+dr-xr-xr-x	0	2025-10-12T19:07:49+01:00	1204
+
+	Size: 0 	Block size: 1024 	Blocks: 0
+	Device: 21 	Rdev: 0 	Inode: 20872 	Links: 9
+	UID: 0 GID: 0
+	Access: 2025-10-12 19:07:49.828 +0100 BST
+	Modify: 2025-10-12 19:07:49.828 +0100 BST
+	Change: 2025-10-12 19:07:49.828 +0100 BST
+
+
+[w] hidden processes found.
+
 
 root@localhost:~#
 ```
+
+Some notes regarding this output:
+
+ - Some kernel rootkits just hide the enumeration of /proc/* (ls /proc/).
+ - If you list the path (ls /proc/1204/) you can list the files and read them.
+ - You can also use cd to confirm that the path exists.
+ - Some kernel rootkits prevent all of this, but sometimes `stat` still works, so that's why the message "PID confirmed via Stat" appears.
 
 This rootkit also hides itself from the system:
 
