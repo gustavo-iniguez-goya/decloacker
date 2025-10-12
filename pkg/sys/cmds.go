@@ -53,7 +53,7 @@ func Ls(dir string, args ...string) map[string]fs.FileInfo {
 	cmd := exec.Command(CmdLs, args...)
 	out, err := cmd.Output()
 	if err != nil {
-		log.Error("error listing files %s\n\n", dir)
+		log.Error("sys.Ls() error listing files %s: %s\n\n", dir, err)
 		return files
 	}
 	lastDir := dir
@@ -82,7 +82,7 @@ func Find(dir string, args ...string) map[string]fs.FileInfo {
 	cmd := exec.Command(CmdFind, args...)
 	out, err := cmd.Output()
 	if err != nil {
-		log.Error("error listing files %s\n\n", dir)
+		log.Error("sys.Find() error listing files %s: %s\n\n", dir, err)
 		return files
 	}
 	lines := strings.Split(string(out), "\n")
