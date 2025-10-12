@@ -77,6 +77,7 @@ var CLI struct {
 		Partition int    `short:"p" help:"Device partition to read (0, 1, 5, ...)" name:"partition"`
 		Ls        struct {
 			Paths     []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
+			Compare   bool     `short:"c" help:"Compare the output against system's ls ouput."`
 			Recursive bool     `short:"r" help:"Enable deep scanning."`
 		} `cmd:"" help:"List directories and files by reading directly from the disk device"`
 		Cp struct {
@@ -96,7 +97,8 @@ var CLI struct {
 			Paths []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
 		} `cmd:"" help:"Return information about a path"`
 		Cat struct {
-			Path string `arg:"" help:"File path to read." required:"" name:"path" type:"path"`
+			Path    string `arg:"" help:"File path to read." required:"" name:"path" type:"path"`
+			Compare bool   `short:"c" help:"Compare the output against system's cat ouput."`
 		} `cmd:"" help:"Reads the content of a file and prints it to stdout"`
 	} `cmd:"" help:"Read files directly from the disk device."`
 
@@ -121,7 +123,7 @@ var CLI struct {
 		System struct {
 			//Paths     []string `arg:"" help:"Path to scan." required:"" name:"paths" type:"path"`
 			//Recursive bool     `short:"r" help:"Enable deep scanning."`
-		} `cmd:"" help:"Scan a path."`
+		} `cmd:"" help:"scan the system looking for hidden procs, lkms, files or content."`
 	} `cmd:"" help:"Commands to decloak files, directories or kernel modules."`
 
 	Dump struct {

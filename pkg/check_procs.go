@@ -182,7 +182,7 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	retBind := CheckBindMounts()
 
 	orig, expected := ListFiles("/proc", "ls", false)
-	ret = CompareFiles(orig, expected)
+	ret = CompareFiles(true, orig, expected)
 
 	liveTasks := ebpf.GetPidList("")
 	for _, t := range liveTasks {

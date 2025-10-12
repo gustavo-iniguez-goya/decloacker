@@ -9,14 +9,19 @@ import (
 )
 
 // CompareFiles checks if 2 directories have the same number of files
-func CompareFiles(orig, expected map[string]os.FileInfo) int {
+func CompareFiles(listFiles bool, orig, expected map[string]os.FileInfo) int {
 	hidden := make(map[string]fs.FileInfo)
 
 	delete(orig, ourProcPath)
 	delete(expected, ourProcPath)
 
+	if len(orig) == 0 && len(expected) > 0 {
+		log.Detection("[!] WARNING: no files returned by the system command. REVIEW\n")
+		return FILES_HIDDEN
+	}
+
 	for file, stat := range expected {
-		if stat != nil {
+		if listFiles && stat != nil {
 			log.Log("%s\t%d\t%s\t%s\n",
 				stat.Mode(),
 				stat.Size(),
@@ -87,7 +92,7 @@ func CheckHiddenFiles(paths []string, tool string, deep bool) int {
 
 	for _, p := range paths {
 		orig, expected := ListFiles(p, tool, deep)
-		r := CompareFiles(orig, expected)
+		r := CompareFiles(true, orig, expected)
 
 		if r != OK {
 			ret = r

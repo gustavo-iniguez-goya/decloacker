@@ -31,43 +31,28 @@ func CheckHiddenContent(paths []string) int {
 		fileContent := sys.Cat("cat", f)
 		fileSize := len(fileContent[f])
 
-		if stat.IsDir() {
-			continue
-		}
-		// XXX: skip big files?
-
 		raw, err := ioutil.ReadFile(f)
-		expectedSize := int64(len(raw))
+		expectedSize := len(raw)
 		expected := string(raw)
 		if err != nil {
 			log.Warn("%s cannot be read\n", f)
 		} else {
 			// XXX: sizes may differ if the file is a symbolic link to /proc, like /etc/mtab
-			if !strings.HasPrefix(f, "/proc") && stat.Size() != expectedSize {
+			if !strings.HasPrefix(f, "/proc") && stat.Size() != int64(expectedSize) {
 				log.Detection("\n=== CONTENT WARNING (read) %s ===\n", f)
 				log.Detection("size differs (content: %d, stat.size: %d, symlink: %v), %s\n", expectedSize, stat.Size(), stat.Mode(), f)
 				log.Detection("====================================\n")
 				ret = CONTENT_HIDDEN
 			}
-			if expected != fileContent[f] {
-				hiddenFound = true
-
-				ret = FILES_HIDDEN
-				log.Detection("\n=== CONTENT WARNING (read) %s ===\n", f)
-				log.Detection("cat content (%d bytes):\n %v\n", fileSize, fileContent[f])
-				log.Detection("-----------------------------------------------------------------\n")
-				log.Detection("Go read content (%d bytes):\n %s\n", expectedSize, expected)
-				log.Detection("====================================\n")
-
-				ret = CONTENT_HIDDEN
-			}
+			ret = CompareContent(f, fileContent[f], expected, fileSize, expectedSize, "read")
+			hiddenFound = ret == CONTENT_HIDDEN
 		}
 
 		// don't mmap /proc or /dev/shm
 		if strings.HasPrefix(f, "/proc") || strings.HasPrefix(f, "/dev/shm") {
 			continue
 		}
-		mSize, mData, err := MmapFile(f)
+		mmSize, mData, err := MmapFile(f)
 		if err != nil {
 			log.Warn("mmap: %s\n", err)
 			continue
@@ -75,22 +60,15 @@ func CheckHiddenContent(paths []string) int {
 
 		// if we haven't found anything, try it with mmap
 		if !hiddenFound {
-			if mSize != expectedSize {
+			if mmSize != int64(expectedSize) {
 				log.Detection("\n=== CONTENT WARNING (mmap) %s ===\n", f)
-				log.Detection("size differs (content: %d, mmap.size: %d, %s)\n", expectedSize, mSize, f)
+				log.Detection("size differs (content: %d, mmap.size: %d, %s)\n", expectedSize, mmSize, f)
 				log.Log("====================================\n")
 				ret = CONTENT_HIDDEN
 			}
 
-			if mData != fileContent[f] {
-				ret = FILES_HIDDEN
-				log.Detection("\n=== CONTENT WARNING (mmap) %s ===\n", f)
-				log.Detection("cat content (%d bytes):\n %v\n", fileSize, fileContent[f])
-				log.Detection("-----------------------------------------------------------------\n")
-				log.Detection("Go mmap content (%d bytes):\n %s\n", len(mData), mData)
-				log.Detection("====================================\n")
-				ret = CONTENT_HIDDEN
-			}
+			ret = CompareContent(f, mData, expected, int(mmSize), expectedSize, "mmap")
+			hiddenFound = ret == CONTENT_HIDDEN
 		}
 	}
 
@@ -99,4 +77,21 @@ func CheckHiddenContent(paths []string) int {
 	}
 
 	return ret
+}
+
+func CompareContent(file, orig, expected string, origSize, expectedSize int, tag string) int {
+	ret := OK
+
+	if expected != orig {
+		ret = FILES_HIDDEN
+		log.Detection("\n=== CONTENT WARNING (%s) %s ===\n", tag, file)
+		log.Detection("cat content (%d bytes):\n %v\n", origSize, orig)
+		log.Detection("-----------------------------------------------------------------\n")
+		log.Detection("Go read content (%d bytes):\n %s\n", expectedSize, expected)
+		log.Detection("====================================\n")
+		ret = CONTENT_HIDDEN
+	}
+
+	return ret
+
 }

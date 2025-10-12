@@ -77,9 +77,22 @@ func main() {
 		decloaker.Conntrack()
 
 	case "disk ls <paths>":
-		orig, expected := decloaker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, CLI.Disk.Ls.Recursive)
-		expected = disk.ReadDir(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Ls.Paths[0], diskfs.ReadOnly, CLI.Disk.Ls.Recursive)
-		ret = decloaker.CompareFiles(orig, expected)
+		expected := disk.ReadDir(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Ls.Paths[0], diskfs.ReadOnly, CLI.Disk.Ls.Recursive)
+		for file, stat := range expected {
+			if stat == nil {
+				continue
+			}
+			dlog.Log("%s\t%d\t%s\t%s\n",
+				stat.Mode(),
+				stat.Size(),
+				stat.ModTime().Format(time.RFC3339),
+				file)
+		}
+
+		if CLI.Disk.Ls.Compare {
+			orig, _ := decloaker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, CLI.Disk.Ls.Recursive)
+			ret = decloaker.CompareFiles(false, orig, expected)
+		}
 	case "disk cp <orig> <dest>":
 		err := disk.Cp(CLI.Disk.Dev, CLI.Disk.Partition, CLI.Disk.Cp.Orig, CLI.Disk.Cp.Dest, diskfs.ReadOnly)
 		if err != nil {
@@ -117,6 +130,12 @@ func main() {
 			dlog.Ok("cat %s:\n\n", CLI.Disk.Cat.Path)
 			dlog.Detection("%s", content)
 			dlog.Log("\n")
+
+			if CLI.Disk.Cat.Compare {
+				orig := sys.Cat("cat", CLI.Disk.Cat.Path)
+				origSize := len(orig)
+				ret = decloaker.CompareContent(CLI.Disk.Cat.Path, orig[CLI.Disk.Cat.Path], string(content), origSize, len(content), "raw")
+			}
 		}
 
 	case "disk rm <paths>":
@@ -215,7 +234,7 @@ func scanHiddenFiles() int {
 		CLI.Scan.HiddenFiles.Recursive = true
 	}
 	if len(CLI.Scan.HiddenFiles.Paths) == 0 {
-		dlog.Error("no paths supplied")
+		dlog.Error("no paths supplied\n")
 		return 1
 	}
 
