@@ -116,7 +116,7 @@ func ConfigureIters(pinIters bool) {
 		}
 		iterTask, err := ebpf.NewCollectionWithOptions(specs, collOpts)
 		if iterTask == nil {
-			log.Error("[eBPF] iter task: %s\n", err)
+			log.Debug("[eBPF] iter task: %s\n", err)
 			continue
 		}
 		prog := iterTask.Programs[progName]
