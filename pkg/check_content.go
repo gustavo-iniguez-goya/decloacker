@@ -16,15 +16,21 @@ func CheckHiddenContent(paths []string) int {
 
 	for _, f := range paths {
 		hiddenFound := false
-		log.Info("Checking for hidden content %s\n", f)
-		fileContent := sys.Cat("cat", f)
-		fileSize := len(fileContent[f])
 
 		stat, err := os.Stat(f)
 		if err != nil {
 			log.Error("Unable to stat %s\n", err)
 			continue
 		}
+		if !stat.Mode().IsRegular() {
+			log.Info("Excluding irregular: %s\n", f)
+			continue
+		}
+
+		log.Info("Checking for hidden content %s\n", f)
+		fileContent := sys.Cat("cat", f)
+		fileSize := len(fileContent[f])
+
 		if stat.IsDir() {
 			continue
 		}
