@@ -10,28 +10,25 @@
 
 ### Usage
 
-tl;dr: `./bin/decloaker --help`
+tl;dr: `./bin/decloaker log-level detection scan system`
 
-There're 4 main areas:
+There're four main areas:
 
 cat, list, move, delete or copy files without the libc.
   - Useful for LD_PRELOAD based rootkits.
 
 ```bash
   cp [<orig> [<dest>]] [flags]
-    Copy file via syscalls.
 
   rm <paths> ... [flags]
-    Delete files via syscalls.
 
   ls [<paths> ...] [flags]
-    List files via syscalls.
 
   mv [<orig> [<dest>]] [flags]
-    Move files via syscalls.
 
   cat [<paths> ...] [flags]
-    Cat files via syscalls.
+
+  stat [<paths> ...] [flags]
 ```
 
 List, copy or get info of directories and files by accessing directly the disk device (only ext4 filesystems).
@@ -40,7 +37,6 @@ List, copy or get info of directories and files by accessing directly the disk d
    - NOTE: only available for ext4 filesystems.
    - NOTE: this feature does not work on tmpfs, so if /tmp is mounted on tmpfs, it won't find hidden files/directories.
      it'll work for LD_PRELOAD rootkits, and some kernel rootkits.
-
 
 ```bash
   disk ls --dev=STRING <paths> ... [flags]
@@ -57,6 +53,8 @@ List, copy or get info of directories and files by accessing directly the disk d
 ```
 
 Scan the system to unhide files, directories, processes or kernel rootkits.
+
+Use `--with-builtin-paths` to scan only hidden files or content predefined paths.
    
 ```bash
   scan hidden-files <paths> ... [flags]
@@ -70,9 +68,12 @@ Scan the system to unhide files, directories, processes or kernel rootkits.
 
   scan hidden-procs
     Look for hidden processes.
+
+  scan system
+    scan the system looking for hidden procs, lkms, files or content.
 ```
 
-Dump connections, processes, opened files or kernel modules directly from the kernel, without parsing /proc/*:
+List sockets:
 
 ```bash
   netstat [<protos> ...] [flags]
@@ -80,7 +81,11 @@ Dump connections, processes, opened files or kernel modules directly from the ke
 
   conntrack list
     Dump conntrack connections table from kernel.
+```
 
+Dump processes, opened files or kernel modules directly from the kernel, without parsing /proc/*:
+
+```bash
   dump files [flags]
     Dump opened files.
 
