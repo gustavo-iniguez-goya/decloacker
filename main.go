@@ -130,8 +130,12 @@ func main() {
 
 	case "scan hidden-files":
 		ret = scanHiddenFiles()
+	case "scan hidden-files <paths>":
+		ret = scanHiddenFiles()
 
 	case "scan hidden-content":
+		ret = scanHiddenContent()
+	case "scan hidden-content <paths>":
 		ret = scanHiddenContent()
 
 	case "scan hidden-lkms":
