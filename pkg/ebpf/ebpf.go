@@ -7,13 +7,13 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/rlimit"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
 )
 
 //go:embed kern/dump_tasks.o
@@ -191,8 +191,8 @@ func GetPidList(filterHost string) (taskList []Task) {
 		inode := parts[0][3]
 		uid := parts[0][4]
 		gid := parts[0][5]
-		comm := strconv.QuoteToASCII(parts[0][7])
-		exe := strconv.QuoteToASCII(parts[0][8])
+		comm := utils.ToAscii(parts[0][7])
+		exe := utils.ToAscii(parts[0][8])
 		// index 0 is the string that matched
 		taskList = append(taskList,
 			[]Task{
@@ -255,9 +255,9 @@ func GetFileList(filterHost string) (fileList []File) {
 		inode := parts[0][4]
 		uid := parts[0][5]
 		gid := parts[0][6]
-		file := strconv.QuoteToASCII(parts[0][8])
-		comm := strconv.QuoteToASCII(parts[0][9])
-		exe := strconv.QuoteToASCII(parts[0][10])
+		file := utils.ToAscii(parts[0][8])
+		comm := utils.ToAscii(parts[0][9])
+		exe := utils.ToAscii(parts[0][10])
 		// index 0 is the string that matched
 		fileList = append(fileList,
 			[]File{

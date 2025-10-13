@@ -10,6 +10,7 @@ import (
 
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
 )
 
 const (
@@ -27,6 +28,11 @@ var (
 )
 
 func printHiddenPid(pid, ppid, inode, uid, gid, comm, exe string) {
+
+	if exe == "" {
+		exe, _ = utils.ReadlinkEscaped(ProcPrefix + pid + "/exe")
+	}
+
 	log.Detection("\tPID: %s\tPPid: %s\n\tInode: %s\tUid: %s\tGid: %s\n\tComm: %s\n\tPath: %s\n\n",
 		pid,
 		ppid,
@@ -34,7 +40,7 @@ func printHiddenPid(pid, ppid, inode, uid, gid, comm, exe string) {
 		uid,
 		gid,
 		comm,
-		exe,
+		utils.ToAscii(exe),
 	)
 }
 
@@ -45,7 +51,7 @@ func getPidInfo(procPath string) ([][]string, string, error) {
 	}
 	status := reStatusField.FindAllStringSubmatch(string(statusContent), -1)
 	var exe string
-	exe, err = os.Readlink(procPath + "/exe")
+	exe, err = utils.ReadlinkEscaped(procPath + "/exe")
 	if err != nil {
 		exe = "(unable to read process path, maybe a kernel thread)"
 	}
@@ -108,7 +114,7 @@ func bruteForcePids(expected map[string]os.FileInfo) int {
 		procPath = fmt.Sprint(ProcPrefix, pid, "/cmdline")
 		cmdline, err := os.ReadFile(procPath)
 		procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
-		exe, _ := os.Readlink(procPath)
+		exe, _ := utils.ReadlinkEscaped(procPath)
 		hiddenProcs[pid] = exe
 
 		log.Detection("WARNING: hidden proc? /proc/%d\n", pid)

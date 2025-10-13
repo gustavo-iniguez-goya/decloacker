@@ -30,6 +30,7 @@ import (
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
 	dlog "github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
 )
 
 func main() {
@@ -196,11 +197,11 @@ func main() {
 			)
 		}
 	case "dump tasks":
-		dlog.Detection("%-10s %-10s %-8s %-5s %-5s %s %-16s %s\n",
+		dlog.Detection("%-10s %-10s %-8s %-8s %-8s %-16s %-16s %s\n",
 			"Pid", "PPid", "Inode", "UID", "GID", "Host", "Comm", "Exe")
 		tasks := ebpf.GetPidList(CLI.Dump.Tasks.Host)
 		for _, t := range tasks {
-			dlog.Detection("%-10s %-10s %-8s %-5s %-5s %s %-16s %s\n",
+			dlog.Detection("%-10s %-10s %-8s %-8s %-8s %-16s %-16s %s\n",
 				t.Pid, t.PPid,
 				t.Inode,
 				t.Uid, t.Gid,
@@ -229,7 +230,7 @@ func main() {
 
 func scanHiddenFiles() int {
 	if CLI.Scan.WithBuiltinPaths {
-		paths := decloaker.ExpandPaths(decloaker.DefaultHiddenFilesPaths)
+		paths := utils.ExpandPaths(decloaker.DefaultHiddenFilesPaths)
 		CLI.Scan.HiddenFiles.Paths = append(CLI.Scan.HiddenFiles.Paths, paths...)
 		CLI.Scan.HiddenFiles.Recursive = true
 	}
@@ -243,7 +244,7 @@ func scanHiddenFiles() int {
 
 func scanHiddenContent() int {
 	if CLI.Scan.WithBuiltinPaths {
-		paths := decloaker.ExpandPaths(decloaker.DefaultHiddenContentPaths)
+		paths := utils.ExpandPaths(decloaker.DefaultHiddenContentPaths)
 		CLI.Scan.HiddenContent.Paths = append(CLI.Scan.HiddenContent.Paths, paths...)
 	}
 	if len(CLI.Scan.HiddenContent.Paths) == 0 {
@@ -265,11 +266,11 @@ func printLs(showExtendedInfo bool) {
 			}
 			dlog.Detection("%v\t%d\t%s\t%s\n", stat.Mode(), stat.Size(), stat.ModTime().Format(time.RFC3339), f)
 			if showExtendedInfo {
-				decloaker.PrintFileExtendedInfo(stat.Sys())
+				utils.PrintFileExtendedInfo(stat.Sys())
 			}
 		}
 		dlog.Log("\n")
-		dlog.Info("%d files scanned\n\n", total)
+		dlog.Debug("%d files\n\n", total)
 	}
 }
 

@@ -1,8 +1,9 @@
-package decloaker
+package utils
 
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -14,7 +15,19 @@ func Exists(path string) bool {
 	return err == nil
 }
 
-func stripLastSlash(dir string) string {
+// we could use QuoteToASCII(), but find or ls don't escape unicode characters,
+// so we leave as is.
+func ToAscii(orig string) string {
+	out := strconv.Quote(orig)
+	return out[1 : len(out)-1]
+}
+
+func ReadlinkEscaped(path string) (string, error) {
+	exe, err := os.Readlink(path)
+	return ToAscii(exe), err
+}
+
+func StripLastSlash(dir string) string {
 	if dir == "/" {
 		return dir
 	}
@@ -25,31 +38,11 @@ func stripLastSlash(dir string) string {
 	return dir
 }
 
-func resetRootPath(dir string) string {
+func ResetRootPath(dir string) string {
 	if dir == "/" {
 		return ""
 	}
 	return dir
-}
-
-func PrintStat(paths []string) {
-	stats := Stat(paths)
-
-	for path, st := range stats {
-		log.Info("Stat %s:\n", path)
-		log.Detection("%s\t%d\t%s\t%s\n",
-			st.Mode(),
-			st.Size(),
-			st.ModTime().Format(time.RFC3339),
-			st.Name(),
-		)
-		if st == nil || st.Sys() == nil {
-			log.Debug("stat.Sys() nil, not available\n")
-			continue
-		}
-		PrintFileExtendedInfo(st.Sys())
-	}
-	log.Log("\n")
 }
 
 func PrintFileExtendedInfo(st any) {

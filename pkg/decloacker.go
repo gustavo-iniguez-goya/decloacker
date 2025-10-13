@@ -7,9 +7,11 @@ import (
 	"os"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
 )
 
 var (
@@ -143,7 +145,7 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 
 	if recursive {
 		root := os.DirFS(path)
-		path = resetRootPath(path)
+		path = utils.ResetRootPath(path)
 		fs.WalkDir(root, ".", func(path2 string, d fs.DirEntry, err error) error {
 			if path2 == "." || path2 == ".." {
 				return nil
@@ -152,7 +154,7 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 				log.Error("error reading path %s: %s\n", path2, err)
 				return nil
 			}
-			path2 = path + "/" + path2
+			path2 = utils.ToAscii(path + "/" + path2)
 			info, err := d.Info()
 			list[path2] = info
 
@@ -162,11 +164,11 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 	}
 
 	entries, _ := os.ReadDir(path)
-	path = resetRootPath(path)
+	path = utils.ResetRootPath(path)
 	for _, entry := range entries {
 		inf, _ := entry.Info()
-		//log.Debug("readDir() %s\n", path+"/"+entry.Name())
-		list[path+"/"+entry.Name()] = inf
+		npath := utils.ToAscii(path + "/" + entry.Name())
+		list[npath] = inf
 	}
 
 	return list
@@ -175,7 +177,7 @@ func ReadDir(path string, recursive bool) map[string]fs.FileInfo {
 // ListFiles returns a list of files and directories using a system command like
 // ls or find, and using Go's functions.
 func ListFiles(path string, tool string, deep bool) (map[string]os.FileInfo, map[string]os.FileInfo) {
-	path = stripLastSlash(path)
+	path = utils.StripLastSlash(path)
 
 	args := []string{path}
 	if !deep {
@@ -199,4 +201,24 @@ func ListFiles(path string, tool string, deep bool) (map[string]os.FileInfo, map
 	list := ReadDir(path, deep)
 
 	return lsDirs, list
+}
+
+func PrintStat(paths []string) {
+	stats := Stat(paths)
+
+	for path, st := range stats {
+		log.Info("Stat %s:\n", path)
+		log.Detection("%s\t%d\t%s\t%s\n",
+			st.Mode(),
+			st.Size(),
+			st.ModTime().Format(time.RFC3339),
+			st.Name(),
+		)
+		if st == nil || st.Sys() == nil {
+			log.Debug("stat.Sys() nil, not available\n")
+			continue
+		}
+		utils.PrintFileExtendedInfo(st.Sys())
+	}
+	log.Log("\n")
 }

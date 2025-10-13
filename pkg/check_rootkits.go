@@ -10,6 +10,7 @@ import (
 
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
 )
 
 type taintT struct {
@@ -119,7 +120,7 @@ func CheckProcModules(tainted bool) int {
 		if kmod.Type != "MOD" && kmod.Type != "FTRACE_MOD" {
 			continue
 		}
-		if !Exists("/sys/module/" + kname) {
+		if !utils.Exists("/sys/module/" + kname) {
 			log.Detection("\n\tWARNING (eBPF): \"%s\" kmod HIDDEN from /sys/module\n", kname)
 			log.Log("\t%q\n", kmod)
 			ret = KMOD_HIDDEN
@@ -161,7 +162,7 @@ func CheckTracingModules() int {
 	}
 
 	for _, path := range monitorPaths {
-		if !Exists(path) {
+		if !utils.Exists(path) {
 			continue
 		}
 		log.Debug(" scanning %s\n", path)
@@ -193,7 +194,7 @@ func CheckTracingModules() int {
 				kmodList[k[1]] = struct{}{}
 			}
 			log.Debug(" checking /sys/module/%s\n", k[1])
-			if !Exists("/sys/module/" + k[1]) {
+			if !utils.Exists("/sys/module/" + k[1]) {
 				log.Detection("\tWARNING (tracing): possible kmod hidden from /sys/module: %v\n", k[1])
 				kmodList[k[1]] = struct{}{}
 			}

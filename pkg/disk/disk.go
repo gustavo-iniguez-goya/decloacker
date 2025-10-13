@@ -12,6 +12,7 @@ import (
 	//"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/ext4"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
 )
 
 // functions to read files directly from the disk device.
@@ -54,7 +55,7 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 			if e.Name() == "." || e.Name() == ".." {
 				continue
 			}
-			list[path+"/"+e.Name()] = e
+			list[utils.ToAscii(path+"/"+e.Name())] = e
 		}
 		return list
 	}
@@ -66,7 +67,7 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 				if e.Name() == "." || e.Name() == ".." {
 					continue
 				}
-				list[dir+"/"+e.Name()] = e
+				list[utils.ToAscii(dir+"/"+e.Name())] = e
 				log.Log("%v\t%d\t%s\t%s\n", e.Mode(), e.Size(), e.ModTime().Format(time.RFC3339), e.Name())
 			}
 		})
@@ -89,7 +90,7 @@ func WalkPath(fs *ext4.FileSystem, path string, sep string, callback func(string
 		if e.Name() == "." || e.Name() == ".." {
 			continue
 		}
-		fullPath := path + "/" + e.Name()
+		fullPath := utils.ToAscii(path + "/" + e.Name())
 		if e.IsDir() {
 			WalkPath(fs, fullPath, sep, callback)
 			continue
