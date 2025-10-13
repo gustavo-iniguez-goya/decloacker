@@ -12,7 +12,7 @@
 
 tl;dr: `./bin/decloaker --log-level detection scan system`
 
-There're four main areas:
+There're five main areas:
 
 cat, list, move, delete or copy files without the libc.
   - Useful for LD_PRELOAD based rootkits. Use these commands instead of system `cp`, `rm`, `ls`, `mv`, `cat` or `stat` to manipulate files.
@@ -94,6 +94,28 @@ Dump processes, opened files or kernel modules directly from the kernel, without
 
   dump tasks [flags]
     Dump running tasks (processes).
+```
+
+Example of listing running processes:
+
+```bash
+root@:~# /home/ga/decloaker dump tasks
+Pid        PPid       Inode    UID    GID    Host         Comm             Exe
+1          1          1703544  0      0      debian12-k3s systemd          /usr/lib/systemd/systemd
+3276       3276       261966   65535  65535  kubeapps-internal-dashboard-69689f47dc-hp5fn pause            /pause
+3539       3539       265011   65532  65532  coredns-697968c856-wmlnd coredns          /coredns
+3598       3598       268220   1001   2001   dashboard-metrics-scraper-5bd45c9dd6-b7qgf metrics-sidecar  /metrics-sidecar
+3738       3738       280114   1001   1001   kubeapps-internal-dashboard-69689f47dc-hp5fn nginx            /opt/bitnami/nginx/sbin/nginx
+3879       3879       156554   100000 100000 lxc-grafana-debian12 "containerd-shim" "/usr/bin/containerd-shim-runc-v2"
+3887       3887       4432     100000 100000 832106eef6ad "sh"             "/usr/bin/dash"
+3949       3949       10162    100472 100000 44555dd7bb6b "sh"             "/bin/busybox"
+3950       3950       27724    100000 100000 cd77355cd571 "entrypoint.sh"  "/usr/bin/bash"
+4187       4187       11816    100472 100000 44555dd7bb6b "grafana"        "/usr/share/grafana/bin/grafana"
+2715       2715       134508   100000 100000 lxc-jenkins "master"         "/usr/lib/postfix/sbin/master"
+2716       2716       134505   100101 100110 lxc-jenkins "pickup"         "/usr/lib/postfix/sbin/pickup"
+2717       2717       134503   100101 100110 lxc-jenkins "qmgr"           "/usr/lib/postfix/sbin/qmgr"
+2731       2731       131106   100000 100000 lxc-jenkins "miniserv.pl"    "/usr/bin/perl"
+
 ```
 
 
