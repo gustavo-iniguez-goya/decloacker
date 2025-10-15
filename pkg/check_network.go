@@ -25,7 +25,8 @@ var procNetFiles = map[string]string{
 
 func CheckHiddenSockets(protos []string) int {
 	hiddenConns := []Socket{}
-	socketList := Netstat(protos)
+	states := map[uint8]struct{}{}
+	socketList := Netstat(protos, states)
 
 	log.Log("%-12s %-8s %-8s %-8s %-6s %-16s %16s %-6s %-8s %-8s %-12s\n",
 		"State", "Inode", "Uid", "IfnamE",

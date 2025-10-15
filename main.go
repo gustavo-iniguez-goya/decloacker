@@ -72,9 +72,9 @@ func main() {
 		decloaker.PrintStat(CLI.Stat.Paths)
 
 	case "netstat <protos>":
-		printNetstat(CLI.Netstat.Protos)
+		printNetstat()
 	case "netstat":
-		printNetstat(CLI.Netstat.Protos)
+		printNetstat()
 
 	case "conntrack list":
 		decloaker.Conntrack()
@@ -259,10 +259,18 @@ func scanHiddenContent() int {
 	return decloaker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
 }
 
-func printNetstat(protos []string) {
-	socketList := decloaker.Netstat(protos)
+func printNetstat() {
+	states := map[uint8]struct{}{}
+	if CLI.Netstat.Listen {
+		states[netlink.TCP_LISTEN] = struct{}{}
+	}
+	if CLI.Netstat.Established {
+		states[netlink.TCP_ESTABLISHED] = struct{}{}
+	}
 
-	dlog.Log("%-12s %-8s %-8s %-8s %6s:%-16s %-16s:%-6s %-8s %-8s %-12s\n",
+	socketList := decloaker.Netstat(CLI.Netstat.Protos, states)
+
+	dlog.Log("%-12s %-8s %-8s %-8s %6s:%-16s %16s:%-6s %-8s %-8s %-12s\n",
 		"State", "Inode", "UID", "Ifname",
 		"Sport", "Source", "Dst", "Dport",
 		"PID", "PPID",
