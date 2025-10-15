@@ -62,6 +62,7 @@ var CLI struct {
 		Paths []string `arg:"" help:"File path to stat." required:"" name:"paths" type:"path"`
 	} `cmd:"" help:"Get details of a file or directory"`
 	Netstat struct {
+		//Listen bool `short:"l" help:"list sockets in Listen state"`
 		// FIXME: this enum affects other commands?
 		// enum:"tcp,udp,udplite,icmp,dccp,sctp,igmp,raw"
 		Protos []string `arg:"" sep:"," enum:"tcp,tcp6,udp,udp6,udplite,udplite6,icmp,icmp6,dccp,dccp6,sctp,sctp6,igmp,igmp6,raw,raw6,packet" optional:"" name:"protos" help:"Protocols to dump (tcp, udp, xdp, raw, packet, icmp, sctp, igmp, dccp) Add 6 for ipv6 protocols (tcp6, udp6, ...)."`
@@ -118,6 +119,9 @@ var CLI struct {
 		HiddenProcs struct {
 			BruteForce bool `short:"b" help:"Try to find processes via brute force."`
 		} `cmd:"" help:"Look for hidden processes."`
+		HiddenSockets struct {
+			Protos []string `arg:"" sep:"," enum:"tcp,tcp6,udp,udp6,udplite,udplite6,icmp,icmp6,dccp,dccp6,sctp,sctp6,igmp,igmp6,raw,raw6,packet" optional:"" name:"protos" help:"Protocols to dump (tcp, udp, xdp, raw, packet, icmp, sctp, igmp, dccp) Add 6 for ipv6 protocols (tcp6, udp6, ...)."`
+		} `cmd:"" help:"Look for hidden sockets."`
 
 		// TODO
 		System struct {

@@ -4,7 +4,6 @@ import (
 	"golang.org/x/sys/unix"
 	"net"
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/evilsocket/opensnitch/daemon/netlink"
@@ -15,6 +14,17 @@ import (
 )
 
 // functions to dump the connections from the kernel, instead of parsing /proc/net/*
+
+type Socket struct {
+	Conn   *netlink.Socket
+	Proto  string
+	Exe    string
+	Comm   string
+	Host   string
+	Ifname string
+	Ppid   string
+	Pid    string
+}
 
 type Protos struct {
 	Proto uint8
@@ -74,7 +84,9 @@ var options = []Protos{
 	//{unix.ETH_P_ALL, syscall.AF_PACKET},
 }
 
-func Netstat(protos []string) int {
+func Netstat(protos []string) []Socket {
+	sckList := []Socket{}
+
 	if len(protos) == 0 || protos[0] == "all" {
 		for p := range knownProtos {
 			protos = append(protos, p)
@@ -102,10 +114,6 @@ func Netstat(protos []string) int {
 			log.Debug("%s netstat error: %s\n", prot, err)
 			continue
 		}
-		/*pid := procmon.GetPIDFromINode(inode, fmt.Sprint(inode,
-			s.ID.Source, s.ID.SourcePort, s.ID.Destination, s.ID.DestinationPort),
-		)*/
-		log.Log("---------------------------------- %s -----------------------------------\n", prot)
 
 		for _, s := range socketList {
 			ifname = ""
@@ -127,24 +135,20 @@ func Netstat(protos []string) int {
 				host = f.Hostname
 			}
 
-			log.Log("%-12s%s: %-8d %s: %-8d %s: %-6s\t%d:%s -> %s:%d\n\tpid=%s ppid=%s host=%s comm=%s exe=%s\n",
-				strings.ToUpper(netlink.TCPStatesMap[s.State]),
-				"inode", s.INode,
-				"uid", s.UID,
-				"ifname", ifname,
-				s.ID.SourcePort,
-				s.ID.Source,
-				s.ID.Destination,
-				s.ID.DestinationPort,
-				pid, ppid,
-				host,
-				comm, exe,
-			)
+			sckList = append(sckList, Socket{
+				Conn:   s,
+				Proto:  prot,
+				Pid:    pid,
+				Ppid:   ppid,
+				Ifname: ifname,
+				Host:   host,
+				Exe:    exe,
+				Comm:   comm,
+			})
 		}
-		log.Log("\n")
 	}
 
-	return OK
+	return sckList
 }
 
 func Conntrack() {

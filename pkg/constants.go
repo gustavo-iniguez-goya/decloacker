@@ -9,6 +9,7 @@ const (
 	CONTENT_HIDDEN = 52
 	PID_BIND_MOUNT = 53
 	PROC_HIDDEN    = 54
+	CONN_HIDDEN    = 55
 )
 
 var (

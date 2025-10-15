@@ -21,10 +21,12 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/diskfs/go-diskfs"
+	"github.com/evilsocket/opensnitch/daemon/netlink"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg"
 	disk "github.com/gustavo-iniguez-goya/decloaker/pkg/disk"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
@@ -70,9 +72,9 @@ func main() {
 		decloaker.PrintStat(CLI.Stat.Paths)
 
 	case "netstat <protos>":
-		ret = decloaker.Netstat(CLI.Netstat.Protos)
+		printNetstat(CLI.Netstat.Protos)
 	case "netstat":
-		ret = decloaker.Netstat([]string{"all"})
+		printNetstat(CLI.Netstat.Protos)
 
 	case "conntrack list":
 		decloaker.Conntrack()
@@ -152,16 +154,18 @@ func main() {
 		ret = scanHiddenFiles()
 	case "scan hidden-files <paths>":
 		ret = scanHiddenFiles()
-
 	case "scan hidden-content":
 		ret = scanHiddenContent()
 	case "scan hidden-content <paths>":
 		ret = scanHiddenContent()
-
 	case "scan hidden-lkms":
 		ret = decloaker.CheckHiddenLKM()
 	case "scan hidden-procs":
 		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
+	case "scan hidden-sockets <protos>":
+		ret = decloaker.CheckHiddenSockets(CLI.Scan.HiddenSockets.Protos)
+	case "scan hidden-sockets":
+		ret = decloaker.CheckHiddenSockets(CLI.Scan.HiddenSockets.Protos)
 	case "scan system":
 		CLI.Scan.WithBuiltinPaths = true
 		CLI.Scan.HiddenFiles.Recursive = true
@@ -253,6 +257,42 @@ func scanHiddenContent() int {
 	}
 
 	return decloaker.CheckHiddenContent(CLI.Scan.HiddenContent.Paths)
+}
+
+func printNetstat(protos []string) {
+	socketList := decloaker.Netstat(protos)
+
+	dlog.Log("%-12s %-8s %-8s %-8s %6s:%-16s %-16s:%-6s %-8s %-8s %-12s\n",
+		"State", "Inode", "UID", "Ifname",
+		"Sport", "Source", "Dst", "Dport",
+		"PID", "PPID",
+		"Host")
+
+	lastProto := ""
+	for _, s := range socketList {
+		if lastProto == "" {
+			lastProto = s.Proto
+		}
+		if lastProto != s.Proto {
+			lastProto = s.Proto
+			dlog.Log("\n%s -------------------------\n", s.Proto)
+		}
+
+		dlog.Log("%-12s %-8d %-8d %-8s %6d:%-16s %16s:%-6d %-8s %-8s %-12s\n\tcomm=%s exe=%s\n",
+			strings.ToUpper(netlink.TCPStatesMap[s.Conn.State]),
+			s.Conn.INode,
+			s.Conn.UID,
+			s.Ifname,
+			s.Conn.ID.SourcePort,
+			s.Conn.ID.Source,
+			s.Conn.ID.Destination,
+			s.Conn.ID.DestinationPort,
+			s.Pid, s.Ppid,
+			s.Host,
+			s.Comm, s.Exe,
+		)
+	}
+	dlog.Log("\n")
 }
 
 func printLs(showExtendedInfo bool) {
