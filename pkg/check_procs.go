@@ -11,6 +11,7 @@ import (
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
+	"github.com/mdlayher/taskstats"
 )
 
 const (
@@ -75,42 +76,61 @@ func bruteForcePids(expected map[string]os.FileInfo) int {
 
 	log.Info("trying with brute force (pid max: %d):\n", pidMax)
 
+	nlTasks, _ := taskstats.New()
 	procPath := ""
 	for pid := 1; pid < pidMax; pid++ {
 		procPath = fmt.Sprint(ProcPrefix, pid)
 		if _, found := expected[procPath]; found {
 			continue
 		}
-		err := os.Chdir(procPath)
 		statInf := Stat([]string{procPath})
-		chdirWorked := err == nil
 		statWorked := len(statInf) > 0
 
-		procPath = fmt.Sprint(ProcPrefix, pid, "/status")
-		status, err := os.ReadFile(procPath)
+		procPath = fmt.Sprint(ProcPrefix, pid, "/comm")
+		comm, err := os.ReadFile(procPath)
 		if err != nil {
-			if chdirWorked {
-				log.Detection("\tWARNING: proc found via Chdir: %d\n", pid)
-				ret = PROC_HIDDEN
-			}
+			chdirWorked := (os.Chdir(procPath) == nil)
 			if statWorked {
-				log.Detection("\tWARNING: PID found via Stat: %d\n", pid)
+				log.Detection("\tWARNING: hidden PID found via Stat: %d\n", pid)
 				PrintStat([]string{procPath})
 				ret = PROC_HIDDEN
+			} else if chdirWorked {
+				log.Detection("\tWARNING: hidden PID found via Chdir: %d\n", pid)
+				ret = PROC_HIDDEN
+			} else if nlTasks != nil {
+				pidStats, _ := nlTasks.PID(pid)
+				if pidStats != nil {
+					log.Detection("\tWARNING: hidden PID found via TaskStats: %d\n", pid)
+					log.Detection("\t%q\n", pidStats)
+					ret = PROC_HIDDEN
+				}
 			}
+			procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
+			statExe := Stat([]string{procPath})
+			statExeWorked := len(statExe) > 0
+			if statExeWorked {
+				PrintStat([]string{procPath})
+			}
+			exe, _ := utils.ReadlinkEscaped(procPath)
+			if exe != "" {
+				log.Detection("\tPath: %s\n", exe)
+			} else if statExeWorked {
+				log.Detection("\t(Binary path not found, use the inode to search)\n")
+			}
+			hiddenProcs[pid] = exe
 
 			continue
 		}
+		procPath = fmt.Sprint(ProcPrefix, pid, "/status")
+		status, err := os.ReadFile(procPath)
 		// exclude threads?
-		if !bytes.Contains(status, []byte(
+		if err == nil && !bytes.Contains(status, []byte(
 			fmt.Sprint("Tgid:\t", pid),
 		)) {
 			log.Debug("excluding pid %d, possible thread\n", pid)
 			continue
 		}
 
-		procPath = fmt.Sprint(ProcPrefix, pid, "/comm")
-		comm, _ := os.ReadFile(procPath)
 		procPath = fmt.Sprint(ProcPrefix, pid, "/cmdline")
 		cmdline, err := os.ReadFile(procPath)
 		procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
