@@ -119,6 +119,7 @@ var CLI struct {
 		} `cmd:"" help:"Look for hidden kernel modules."`
 		HiddenProcs struct {
 			BruteForce bool `short:"b" help:"Try to find processes via brute force."`
+			MaxPid     int  `short:"m" help:"Don't scan pass this pid."`
 		} `cmd:"" help:"Look for hidden processes."`
 		HiddenSockets struct {
 			Protos []string `arg:"" sep:"," enum:"tcp,tcp6,udp,udp6,udplite,udplite6,icmp,icmp6,dccp,dccp6,sctp,sctp6,igmp,igmp6,raw,raw6,packet" optional:"" name:"protos" help:"Protocols to dump (tcp, udp, xdp, raw, packet, icmp, sctp, igmp, dccp) Add 6 for ipv6 protocols (tcp6, udp6, ...)."`

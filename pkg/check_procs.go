@@ -16,6 +16,7 @@ import (
 
 const (
 	PidName = 0
+	PidTGID = 3
 	PidPID  = 5
 	PidPPID = 6
 
@@ -63,7 +64,57 @@ func getPidInfo(procPath string) ([][]string, string, error) {
 	return status, exe, nil
 }
 
-func bruteForcePids(expected map[string]os.FileInfo) int {
+func printBinaryInfo(tgid, pid int) string {
+	log.Detection("WARNING: thread of a hidden PID found %d, ppid: %d\n", pid, tgid)
+	cmdline, _ := os.ReadFile(fmt.Sprint(ProcPrefix, pid, "/cmdline"))
+	exe, _ := utils.ReadlinkEscaped(fmt.Sprint(ProcPrefix, pid, "/exe"))
+	//hiddenProcs[tgid] = exe
+
+	log.Detection("\tPath: %s\n\tCmdline: %s\n\n", exe, cmdline)
+
+	return exe
+}
+
+func checkOtherMethods(nlTasks *taskstats.Client, pid int) (string, int) {
+	ret := OK
+	exe := ""
+	procPath := fmt.Sprint(ProcPrefix, pid)
+
+	statInf := Stat([]string{procPath})
+	statWorked := len(statInf) > 0
+	chdirWorked := os.Chdir(fmt.Sprint(ProcPrefix, pid)) == nil
+	if statWorked {
+		log.Detection("\tWARNING: hidden PID found via Stat: %d\n", pid)
+		PrintStat([]string{procPath})
+		ret = PROC_HIDDEN
+	} else if chdirWorked {
+		log.Detection("\tWARNING: hidden PID found via Chdir: %d\n", pid)
+		ret = PROC_HIDDEN
+	} else if nlTasks != nil {
+		pidStats, _ := nlTasks.PID(pid)
+		if pidStats != nil {
+			log.Detection("\tWARNING: hidden PID found via TaskStats: %d\n", pid)
+			log.Detection("\t%q\n", pidStats)
+			ret = PROC_HIDDEN
+		}
+	}
+	procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
+	statExe := Stat([]string{procPath})
+	statExeWorked := len(statExe) > 0
+	if statExeWorked {
+		PrintStat([]string{procPath})
+	}
+	exe, _ = utils.ReadlinkEscaped(procPath)
+	if exe != "" {
+		log.Detection("\tPath: %s\n", exe)
+	} else if statExeWorked {
+		log.Detection("\t(Binary path not found, use the inode to search it)\n")
+	}
+
+	return exe, ret
+}
+
+func bruteForcePids(expected map[string]os.FileInfo, maxPid int) int {
 	ret := OK
 
 	hiddenProcs := make(map[int]string)
@@ -73,6 +124,9 @@ func bruteForcePids(expected map[string]os.FileInfo) int {
 		log.Debug("/proc/sys/kernel/pid_max should not be 0 (error? %s)", err)
 		pidMax = 4194304 // could be less
 	}
+	if maxPid > 0 {
+		pidMax = maxPid
+	}
 
 	log.Info("trying with brute force (pid max: %d):\n", pidMax)
 
@@ -80,54 +134,34 @@ func bruteForcePids(expected map[string]os.FileInfo) int {
 	procPath := ""
 	for pid := 1; pid < pidMax; pid++ {
 		procPath = fmt.Sprint(ProcPrefix, pid)
-		if _, found := expected[procPath]; found {
+		if _, found := expected[procPath]; found || procPath == ourProcPath {
 			continue
 		}
-		statInf := Stat([]string{procPath})
-		statWorked := len(statInf) > 0
 
 		procPath = fmt.Sprint(ProcPrefix, pid, "/comm")
 		comm, err := os.ReadFile(procPath)
 		if err != nil {
-			chdirWorked := (os.Chdir(procPath) == nil)
-			if statWorked {
-				log.Detection("\tWARNING: hidden PID found via Stat: %d\n", pid)
-				PrintStat([]string{procPath})
-				ret = PROC_HIDDEN
-			} else if chdirWorked {
-				log.Detection("\tWARNING: hidden PID found via Chdir: %d\n", pid)
-				ret = PROC_HIDDEN
-			} else if nlTasks != nil {
-				pidStats, _ := nlTasks.PID(pid)
-				if pidStats != nil {
-					log.Detection("\tWARNING: hidden PID found via TaskStats: %d\n", pid)
-					log.Detection("\t%q\n", pidStats)
-					ret = PROC_HIDDEN
-				}
-			}
-			procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
-			statExe := Stat([]string{procPath})
-			statExeWorked := len(statExe) > 0
-			if statExeWorked {
-				PrintStat([]string{procPath})
-			}
-			exe, _ := utils.ReadlinkEscaped(procPath)
-			if exe != "" {
-				log.Detection("\tPath: %s\n", exe)
-			} else if statExeWorked {
-				log.Detection("\t(Binary path not found, use the inode to search)\n")
-			}
+			exe := ""
+			exe, ret = checkOtherMethods(nlTasks, pid)
 			hiddenProcs[pid] = exe
-
 			continue
 		}
-		procPath = fmt.Sprint(ProcPrefix, pid, "/status")
-		status, err := os.ReadFile(procPath)
-		// exclude threads?
-		if err == nil && !bytes.Contains(status, []byte(
-			fmt.Sprint("Tgid:\t", pid),
-		)) {
-			log.Debug("excluding pid %d, possible thread\n", pid)
+		// this PID is hidden from filesystem tools. It could be a thread or a hidden PID.
+
+		status, _, err := getPidInfo(fmt.Sprint(ProcPrefix, pid))
+		if err != nil {
+			log.Info("error %d: %s\n", pid, err)
+			continue
+		}
+
+		// if it's a thread, check if the ppid is hidden
+		if status[PidTGID][2] != status[PidPID][2] {
+			tgid, _ := strconv.Atoi(status[PidTGID][2])
+			if _, found := hiddenProcs[tgid]; !found {
+				continue
+			}
+			exe := printBinaryInfo(tgid, pid)
+			hiddenProcs[tgid] = exe
 			continue
 		}
 
@@ -200,7 +234,7 @@ func CheckBindMounts() int {
 	return ret
 }
 
-func CheckHiddenProcs(doBruteForce bool) int {
+func CheckHiddenProcs(doBruteForce bool, maxPid int) int {
 	log.Info("Checking hidden processes:\n\n")
 
 	ret := OK
@@ -233,7 +267,7 @@ func CheckHiddenProcs(doBruteForce bool) int {
 	}
 
 	if doBruteForce {
-		retBrute = bruteForcePids(expected)
+		retBrute = bruteForcePids(expected, maxPid)
 	}
 
 	if ret != OK || retBind != OK || retBrute != OK {

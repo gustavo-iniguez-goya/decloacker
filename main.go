@@ -161,7 +161,7 @@ func main() {
 	case "scan hidden-lkms":
 		ret = decloaker.CheckHiddenLKM()
 	case "scan hidden-procs":
-		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
+		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce, CLI.Scan.HiddenProcs.MaxPid)
 	case "scan hidden-sockets <protos>":
 		ret = decloaker.CheckHiddenSockets(CLI.Scan.HiddenSockets.Protos)
 	case "scan hidden-sockets":
@@ -172,7 +172,7 @@ func main() {
 		scanHiddenFiles()
 		scanHiddenContent()
 		ret = decloaker.CheckHiddenLKM()
-		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce)
+		ret = decloaker.CheckHiddenProcs(CLI.Scan.HiddenProcs.BruteForce, 0)
 
 	case "dump files":
 		dlog.Detection("%-10s %-10s %-6s %-8s %-5s %-5s %s %-16s %s\t%s\n",

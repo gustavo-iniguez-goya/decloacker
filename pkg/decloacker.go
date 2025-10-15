@@ -220,5 +220,5 @@ func PrintStat(paths []string) {
 		}
 		utils.PrintFileExtendedInfo(st.Sys())
 	}
-	log.Log("\n")
+	//log.Log("\n")
 }
