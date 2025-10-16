@@ -9,7 +9,7 @@ import (
 
 	"github.com/diskfs/go-diskfs"
 	//"github.com/diskfs/go-diskfs/disk"
-	//"github.com/diskfs/go-diskfs/filesystem"
+	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/ext4"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
@@ -38,16 +38,10 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 		log.Error("unable to read disk partition %s, %d: %s\n", dev, partition, err)
 		return list
 	}
-
-	ext4fs, ok := fs.(*ext4.FileSystem)
-	if !ok {
-		log.Error("%s is not a ext4 filesystem\n")
-		return list
-	}
-	defer ext4fs.Close()
+	defer fs.Close()
 
 	if !recursive {
-		entries, err := ext4fs.ReadDir(path)
+		entries, err := fs.ReadDir(path)
 		if err != nil {
 			return list
 		}
@@ -60,7 +54,7 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 		return list
 	}
 
-	WalkPath(ext4fs, path, "",
+	WalkPath(fs, path, "",
 		func(dir string, entries []os.FileInfo) {
 			log.Debug("reading path %s\n", dir)
 			for _, e := range entries {
@@ -78,7 +72,7 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 	return list
 }
 
-func WalkPath(fs *ext4.FileSystem, path string, sep string, callback func(string, []os.FileInfo)) error {
+func WalkPath(fs filesystem.FileSystem, path string, sep string, callback func(string, []os.FileInfo)) error {
 	//Log("reading dir %s\n\n", path)
 	entries, err := fs.ReadDir(path)
 	if err != nil {
