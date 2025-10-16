@@ -80,3 +80,18 @@ func ExpandPaths(pathList []string) []string {
 
 	return paths
 }
+
+func IntSliceToString(a [32]int8, sep string) string {
+	if len(a) == 0 {
+		return ""
+	}
+
+	b := make([]byte, len(a))
+	for i, v := range a {
+		if v == 0 {
+			break
+		}
+		b[i] = byte(v)
+	}
+	return string(b)
+}

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
@@ -84,16 +86,16 @@ func checkOtherMethods(nlTasks *taskstats.Client, pid int) (string, int) {
 	statWorked := len(statInf) > 0
 	chdirWorked := os.Chdir(fmt.Sprint(ProcPrefix, pid)) == nil
 	if statWorked {
-		log.Detection("\tWARNING: hidden PID found via Stat: %d\n", pid)
+		log.Detection("\tWARNING: hidden PID confirmed via Stat: %d\n", pid)
 		PrintStat([]string{procPath})
 		ret = PROC_HIDDEN
 	} else if chdirWorked {
-		log.Detection("\tWARNING: hidden PID found via Chdir: %d\n", pid)
+		log.Detection("\tWARNING: hidden PID confirmed via Chdir: %d\n", pid)
 		ret = PROC_HIDDEN
 	} else if nlTasks != nil {
 		pidStats, _ := nlTasks.PID(pid)
 		if pidStats != nil {
-			log.Detection("\tWARNING: hidden PID found via TaskStats: %d\n", pid)
+			log.Detection("\tWARNING: hidden PID confirmed via TaskStats: %d\n", pid)
 			log.Detection("\t%q\n", pidStats)
 			ret = PROC_HIDDEN
 		}
@@ -114,7 +116,7 @@ func checkOtherMethods(nlTasks *taskstats.Client, pid int) (string, int) {
 	return exe, ret
 }
 
-func bruteForcePids(expected map[string]os.FileInfo, maxPid int) int {
+func bruteForcePids(nlTasks *taskstats.Client, expected map[string]os.FileInfo, maxPid int) int {
 	ret := OK
 
 	hiddenProcs := make(map[int]string)
@@ -130,7 +132,6 @@ func bruteForcePids(expected map[string]os.FileInfo, maxPid int) int {
 
 	log.Info("trying with brute force (pid max: %d):\n", pidMax)
 
-	nlTasks, _ := taskstats.New()
 	procPath := ""
 	for pid := 1; pid < pidMax; pid++ {
 		procPath = fmt.Sprint(ProcPrefix, pid)
@@ -234,9 +235,63 @@ func CheckBindMounts() int {
 	return ret
 }
 
+func CheckHiddenProcsCgroups(nlTasks *taskstats.Client, expected map[string]os.FileInfo) int {
+	log.Info("Checking hidden processes via cgroups:\n\n")
+	ret := OK
+
+	cgroups := ReadDir("/sys/fs/cgroup/", true)
+	for path := range cgroups {
+		base := filepath.Base(path)
+		if len(base) > 6 && base[len(base)-6:] != ".procs" {
+			continue
+		}
+		cgs, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		pidList := string(cgs)
+		for _, pid := range strings.Split(pidList, "\n") {
+			if pid == "" || pid == ourPid {
+				continue
+			}
+			cgPid := fmt.Sprint(ProcPrefix, pid)
+			if _, found := expected[cgPid]; found {
+				continue
+			}
+			iPid, _ := strconv.Atoi(pid)
+			log.Log("WARNING: hidden PID found via Cgroups: %s\n", cgPid)
+			checkOtherMethods(nlTasks, iPid)
+			ret = PROC_HIDDEN
+
+			// TODO: https://github.com/mdlayher/taskstats/issues/14
+			/*
+				if nlTasks == nil {
+					log.Debug("unable to obtain PID info via TaskStats\n")
+					continue
+				}
+				spid, _ := strconv.Atoi(pid)
+				pidStats, _ := nlTasks.PID(spid)
+				comm := utils.IntSliceToString(pidStats.Comm, "")
+				log.Log("\t Comm: %s\n\tPID: %d, PPID: %d, TGID: %d, UID: %d, GID: %d, Dev: %d, Inode: %d\n",
+					comm,
+					pidStats.PID,
+					pidStats.PPID,
+					pidStats.TGID,
+					pidStats.UID,
+					pidStats.GID,
+					pidStats.ExeDev,
+					pidStats.ExeInode,
+				)*/
+		}
+	}
+
+	return ret
+}
+
 func CheckHiddenProcs(doBruteForce bool, maxPid int) int {
 	log.Info("Checking hidden processes:\n\n")
 
+	nlTasks, _ := taskstats.New()
 	ret := OK
 	retBrute := OK
 	retBind := CheckBindMounts()
@@ -266,8 +321,12 @@ func CheckHiddenProcs(doBruteForce bool, maxPid int) int {
 		ret = PROC_HIDDEN
 	}
 
+	if len(liveTasks) == 0 {
+		ret = CheckHiddenProcsCgroups(nlTasks, expected)
+	}
+
 	if doBruteForce {
-		retBrute = bruteForcePids(expected, maxPid)
+		retBrute = bruteForcePids(nlTasks, expected, maxPid)
 	}
 
 	if ret != OK || retBind != OK || retBrute != OK {
