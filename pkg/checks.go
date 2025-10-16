@@ -3,6 +3,7 @@ package decloaker
 import (
 	"io/fs"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
@@ -12,12 +13,15 @@ import (
 func CompareFiles(listFiles bool, orig, expected map[string]os.FileInfo) int {
 	hidden := make(map[string]fs.FileInfo)
 
-	delete(orig, ourProcPath)
-	delete(expected, ourProcPath)
-
 	if len(orig) == 0 && len(expected) > 0 {
 		log.Detection("[!] WARNING: no files returned by the system command. REVIEW\n")
 		return FILES_HIDDEN
+	}
+	for file := range expected {
+		if strings.HasPrefix(file, ourProcPath) {
+			delete(expected, file)
+			delete(orig, file)
+		}
 	}
 
 	for file, stat := range expected {
@@ -31,12 +35,12 @@ func CompareFiles(listFiles bool, orig, expected map[string]os.FileInfo) int {
 
 		if statOrig, found := orig[file]; !found {
 			hidden[file] = stat
-			log.Detection("\tHIDDEN: %s\n\n", file)
+			log.Log("\tHIDDEN: %s\n\n", file)
 			continue
 		} else {
 			if statOrig != nil && stat != nil {
 				if statOrig.Size() != stat.Size() {
-					log.Detection("\tWARNING, size differs for %s, expected: %d, %d\n", file, stat.Size(), statOrig.Size())
+					log.Log("\tWARNING, size differs for %s, expected: %d, %d\n", file, stat.Size(), statOrig.Size())
 				}
 			}
 		}
@@ -78,7 +82,8 @@ func CompareFiles(listFiles bool, orig, expected map[string]os.FileInfo) int {
 	} else {
 		log.Log("\n")
 		log.Info("\tfiles checked (%d/%d)\n", len(orig), len(expected))
-		log.Info("\tno hidden dirs/files found\n\n")
+		log.Info("\tno hidden dirs/files found\n")
+		log.Info("\t(Use ./decloaker disk -d /dev/<disk> ls --compare /path to low-level scan the disk device. Only ext4 filesystems.)\n\n")
 	}
 
 	return ret

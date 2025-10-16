@@ -77,7 +77,7 @@ func CheckHiddenSockets(protos []string) int {
 
 	log.Detection("[!] %d HIDDEN connections found\n", hiddenCount)
 	for _, s := range hiddenConns {
-		log.Log("%-12s %-8d %-8d %-8s %-6d %-16s %16s %-6d %-8s %-8s %-12s\n\tcomm=%s exe=%s\n",
+		log.Detection("%-12s %-8d %-8d %-8s %-6d %-16s %16s %-6d %-8s %-8s %-12s\n\tcomm=%s exe=%s\n",
 			strings.ToUpper(netlink.TCPStatesMap[s.Conn.State]),
 			s.Conn.INode,
 			s.Conn.UID,

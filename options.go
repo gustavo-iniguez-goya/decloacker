@@ -79,7 +79,7 @@ var CLI struct {
 		Partition int    `short:"p" help:"Device partition to read (0, 1, 5, ...)" name:"partition"`
 		Ls        struct {
 			Paths     []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
-			Compare   bool     `short:"c" help:"Compare the output against system's ls ouput."`
+			Compare   bool     `short:"c" help:"Compare the output against system's ls ouputi to detect hidden files."`
 			Recursive bool     `short:"r" help:"Enable deep scanning."`
 		} `cmd:"" help:"List directories and files by reading directly from the disk device"`
 		Cp struct {
@@ -100,7 +100,7 @@ var CLI struct {
 		} `cmd:"" help:"Return information about a path"`
 		Cat struct {
 			Path    string `arg:"" help:"File path to read." required:"" name:"path" type:"path"`
-			Compare bool   `short:"c" help:"Compare the output against system's cat ouput."`
+			Compare bool   `short:"c" help:"Compare the output against system's cat ouput to detect hidden content."`
 		} `cmd:"" help:"Reads the content of a file and prints it to stdout"`
 	} `cmd:"" help:"Read files directly from the disk device."`
 
