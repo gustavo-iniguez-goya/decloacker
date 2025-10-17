@@ -24,7 +24,7 @@ jobs:
             target: amd64
           - runner: ubuntu-24.04-arm
             target: arm64
-          - runner: ARM32
+          - runner: ubuntu-24.04-arm
             target: arm
     runs-on: ${{ matrix.runner }}
 
@@ -40,7 +40,7 @@ jobs:
 
       - name: Build
         run: |
-          echo "Compiling for ${{ matrix.target }} on ${{ matrix.runner }}"
+          target="${{ matrix.target }}"
+          echo "Compiling for $target on ${{ matrix.runner }}"
           sudo apt install libbpf-dev clang
-          make
-
+          GOARCH=${{ matrix.target }} make
