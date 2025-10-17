@@ -17,7 +17,15 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: amd64
+          - runner: ubuntu-24.04-arm
+            target: arm64
+    runs-on: ${{ matrix.runner }}
+
     steps:
       - name: Set up Go 1.24.0
         uses: actions/setup-go@v3
@@ -30,6 +38,7 @@ jobs:
 
       - name: Build
         run: |
+          echo "Compiling for ${{ matrix.target }} on ${{ matrix.runner }}"
           sudo apt install libbpf-dev clang
           make
 
