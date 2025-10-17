@@ -12,7 +12,15 @@ permissions:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: amd64
+          - runner: ubuntu-24.04-arm
+            target: arm64
+    runs-on: ${{ matrix.runner }}
+
     steps:
       - name: Set up Go 1.24.0
         uses: actions/setup-go@v3
@@ -32,9 +40,9 @@ jobs:
           echo "github release: ${{ github.sha }}" > checksums.txt
           sha256sum bin/decloaker > checksums.txt
 
-          tar zcf decloaker-$(date +%Y%m%d-$TAG).tar.gz bin/decloaker README.md LICENSE checksums.txt
+          tar zcf "decloaker-$(date +%Y%m%d-$TAG)-${{ matrix.target }}.tar.gz" bin/decloaker README.md LICENSE checksums.txt
           cat checksums.txt
-          ls -lh decloaker-$(date +%Y%m%d-$TAG).tar.gz
+          ls -lh "decloaker-$(date +%Y%m%d-$TAG)-${{ matrix.target }}.tar.gz"
 
       - name: Release
         uses: softprops/action-gh-release@v2
