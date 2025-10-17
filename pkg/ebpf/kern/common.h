@@ -3,4 +3,8 @@
 
 #define WITH_PATH
 
+#ifndef NULL
+ #define NULL 0
+#endif
+
 #endif
