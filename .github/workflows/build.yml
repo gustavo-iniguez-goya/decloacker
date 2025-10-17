@@ -24,6 +24,8 @@ jobs:
             target: amd64
           - runner: ubuntu-24.04-arm
             target: arm64
+          - runner: ARM32
+            target: arm
     runs-on: ${{ matrix.runner }}
 
     steps:
