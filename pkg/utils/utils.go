@@ -61,9 +61,9 @@ func PrintFileExtendedInfo(st any) {
 		statt.Nlink,
 		statt.Uid,
 		statt.Gid,
-		time.Unix(statt.Atim.Sec, statt.Atim.Nsec),
-		time.Unix(statt.Mtim.Sec, statt.Mtim.Nsec),
-		time.Unix(statt.Ctim.Sec, statt.Ctim.Nsec),
+		time.Unix(int64(statt.Atim.Sec), int64(statt.Atim.Nsec)),
+		time.Unix(int64(statt.Mtim.Sec), int64(statt.Mtim.Nsec)),
+		time.Unix(int64(statt.Ctim.Sec), int64(statt.Ctim.Nsec)),
 	)
 
 }
