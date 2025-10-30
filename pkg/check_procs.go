@@ -12,8 +12,9 @@ import (
 
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/ebpf"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
+	"github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
-	"github.com/mdlayher/taskstats"
+	"github.com/gustavo-iniguez-goya/taskstats"
 )
 
 const (
@@ -96,10 +97,10 @@ func checkOtherMethods(nlTasks *taskstats.Client, pid int) (string, int) {
 		pidStats, _ := nlTasks.PID(pid)
 		if pidStats != nil {
 			log.Detection("\tWARNING: hidden PID confirmed via TaskStats: %d\n", pid)
-			log.Detection("\t%q\n", pidStats)
 			ret = PROC_HIDDEN
 		}
 	}
+
 	procPath = fmt.Sprint(ProcPrefix, pid, "/exe")
 	statExe := Stat([]string{procPath})
 	statExeWorked := len(statExe) > 0
@@ -264,24 +265,23 @@ func CheckHiddenProcsCgroups(nlTasks *taskstats.Client, expected map[string]os.F
 			ret = PROC_HIDDEN
 
 			// TODO: https://github.com/mdlayher/taskstats/issues/14
-			/*
-				if nlTasks == nil {
-					log.Debug("unable to obtain PID info via TaskStats\n")
-					continue
-				}
-				spid, _ := strconv.Atoi(pid)
-				pidStats, _ := nlTasks.PID(spid)
-				comm := utils.IntSliceToString(pidStats.Comm, "")
-				log.Log("\t Comm: %s\n\tPID: %d, PPID: %d, TGID: %d, UID: %d, GID: %d, Dev: %d, Inode: %d\n",
-					comm,
-					pidStats.PID,
-					pidStats.PPID,
-					pidStats.TGID,
-					pidStats.UID,
-					pidStats.GID,
-					pidStats.ExeDev,
-					pidStats.ExeInode,
-				)*/
+			if nlTasks == nil {
+				log.Debug("unable to obtain PID info via TaskStats\n")
+				continue
+			}
+			spid, _ := strconv.Atoi(pid)
+			pidStats, _ := nlTasks.PID(spid)
+			comm := utils.IntSliceToString(pidStats.Comm, "")
+			log.Log("\tComm: %s\n\tPID: %d, PPID: %d, TGID: %d, UID: %d, GID: %d, Dev: %d, Inode: %d\n",
+				comm,
+				pidStats.PID,
+				pidStats.PPID,
+				pidStats.TGID,
+				pidStats.UID,
+				pidStats.GID,
+				pidStats.ExeDev,
+				pidStats.ExeInode,
+			)
 		}
 	}
 
@@ -296,7 +296,7 @@ func CheckHiddenProcs(doBruteForce bool, maxPid int) int {
 	retBrute := OK
 	retBind := CheckBindMounts()
 
-	orig, expected := ListFiles("/proc", "ls", false)
+	orig, expected := ListFiles("/proc", sys.CmdLs, false)
 	ret = CompareFiles(true, orig, expected)
 
 	liveTasks := ebpf.GetPidList("")
