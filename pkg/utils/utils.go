@@ -81,7 +81,10 @@ func ExpandPaths(pathList []string) []string {
 	return paths
 }
 
-func IntSliceToString(a [32]int8, sep string) string {
+// the first argument is an interface, to accept Taskstats Comm field
+// of different architectures: uint8 on arm, int8 on the rest.
+func IntSliceToString(aa interface{}, sep string) string {
+	a := aa.([32]int8)
 	if len(a) == 0 {
 		return ""
 	}
