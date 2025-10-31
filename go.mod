@@ -14,7 +14,7 @@ require github.com/mdlayher/taskstats v0.0.0-20241219020249-a291fa5f5a69 // indi
 
 require (
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/gustavo-iniguez-goya/taskstats v0.0.0-20251030223441-b343d8ea4c4c
+	github.com/gustavo-iniguez-goya/taskstats v0.0.0-20251031202614-c87b80fc2d53
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
 	github.com/mdlayher/netlink v1.7.2 // indirect
