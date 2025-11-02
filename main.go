@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/diskfs/go-diskfs"
 	"github.com/evilsocket/opensnitch/daemon/netlink"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg"
 	disk "github.com/gustavo-iniguez-goya/decloaker/pkg/disk"
@@ -33,6 +32,7 @@ import (
 	dlog "github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/sys"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
+	"github.com/gustavo-iniguez-goya/go-diskfs"
 )
 
 func main() {
@@ -93,7 +93,7 @@ func main() {
 		}
 
 		if CLI.Disk.Ls.Compare {
-			orig, _ := decloaker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdLs, CLI.Disk.Ls.Recursive)
+			orig, _ := decloaker.ListFiles(CLI.Disk.Ls.Paths[0], sys.CmdFind, CLI.Disk.Ls.Recursive)
 			ret = decloaker.CompareFiles(false, orig, expected)
 		}
 	case "disk cp <orig> <dest>":
@@ -148,6 +148,26 @@ func main() {
 			ret = decloaker.ERROR
 		} else {
 			dlog.Ok("rm %v\n\n", CLI.Disk.Rm.Paths)
+		}
+	case "disk find <paths>":
+		files := disk.Find(
+			CLI.Disk.Dev,
+			CLI.Disk.Partition,
+			CLI.Disk.Find.Paths[0],
+			CLI.Disk.Find.Inode,
+			CLI.Disk.Find.Name,
+			diskfs.ReadOnly,
+			CLI.Disk.Find.Recursive,
+		)
+		for file, stat := range files {
+			if stat == nil {
+				continue
+			}
+			dlog.Log("%s\t%d\t%s\t%s\n",
+				stat.Mode(),
+				stat.Size(),
+				stat.ModTime().Format(time.RFC3339),
+				file)
 		}
 
 	case "scan hidden-files":

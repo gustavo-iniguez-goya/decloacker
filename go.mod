@@ -6,11 +6,10 @@ require (
 	github.com/alecthomas/kong v1.12.1
 	github.com/diskfs/go-diskfs v1.7.0
 	github.com/evilsocket/opensnitch/daemon v0.0.0-20250924105016-cb2feeb6a367
+	github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102015309-fc6256dbacbd
 	github.com/vishvananda/netlink v1.3.1
 	golang.org/x/sys v0.31.0
 )
-
-require github.com/mdlayher/taskstats v0.0.0-20241219020249-a291fa5f5a69 // indirect
 
 require (
 	github.com/google/go-cmp v0.6.0 // indirect
@@ -33,6 +32,6 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.17 // indirect
 	github.com/pkg/xattr v0.4.9 // indirect
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
+	github.com/ulikunitz/xz v0.5.15 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 )

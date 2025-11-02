@@ -5,15 +5,97 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"syscall"
 	"time"
 
-	"github.com/diskfs/go-diskfs"
+	"github.com/gustavo-iniguez-goya/go-diskfs"
 	//"github.com/diskfs/go-diskfs/disk"
-	"github.com/diskfs/go-diskfs/filesystem"
-	"github.com/diskfs/go-diskfs/filesystem/ext4"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
+	"github.com/gustavo-iniguez-goya/go-diskfs/filesystem"
+	"github.com/gustavo-iniguez-goya/go-diskfs/filesystem/ext4"
 )
+
+func parseEntries(path string, entries []os.FileInfo, inode uint64, search string, matchCb func(path string, e os.FileInfo)) {
+	for _, e := range entries {
+		if e.Name() == "." || e.Name() == ".." {
+			continue
+		}
+
+		pth := path + "/" + e.Name()
+		if inode > 0 {
+			ino := e.Sys().(syscall.Stat_t)
+			if ino.Ino == inode {
+				matchCb(utils.ToAscii(pth), e)
+				continue
+			}
+		}
+		if search == "" {
+			continue
+		}
+		matched, err := filepath.Match(search, e.Name())
+		if matched {
+			//list[utils.ToAscii(pth)] = e
+			matchCb(utils.ToAscii(pth), e)
+			continue
+		}
+		if err != nil {
+			log.Error("file pattern error: %s\n", err)
+			return
+		}
+	}
+}
+
+func Find(dev string, partition int, path string, inode uint64, search string, openMode diskfs.OpenModeOption, recursive bool) map[string]os.FileInfo {
+	if path[len(path)-1] == '/' {
+		path = path[0 : len(path)-1]
+	}
+
+	list := make(map[string]os.FileInfo)
+	disk, err := diskfs.Open(
+		dev,
+		diskfs.WithOpenMode(openMode),
+	)
+	if err != nil {
+		log.Error("unable to read disk %s\n", dev)
+		return list
+	}
+	defer disk.Close()
+
+	fs, err := disk.GetFilesystem(partition)
+	if err != nil {
+		log.Error("unable to read disk partition %s, %d: %s\n", dev, partition, err)
+		return list
+	}
+	defer fs.Close()
+
+	if !recursive {
+		entries, err := fs.ReadDir(path)
+		if err != nil {
+			return list
+		}
+		parseEntries(path, entries, inode, search,
+			func(path string, e os.FileInfo) {
+				list[path] = e
+			})
+		return list
+	}
+
+	WalkPath(fs, path, "",
+		func(dir string, entries []os.FileInfo) {
+			log.Debug("reading path %s\n", dir)
+			parseEntries(dir, entries, inode, search,
+				func(path string, e os.FileInfo) {
+					list[path] = e
+				})
+		})
+	if err != nil {
+		log.Warn("Find files warning: %s\n", err)
+	}
+
+	return list
+}
 
 // functions to read files directly from the disk device.
 

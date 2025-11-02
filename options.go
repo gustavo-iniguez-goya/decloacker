@@ -102,6 +102,12 @@ var CLI struct {
 			Path    string `arg:"" help:"File path to read." required:"" name:"path" type:"path"`
 			Compare bool   `short:"c" help:"Compare the output against system's cat ouput to detect hidden content."`
 		} `cmd:"" help:"Reads the content of a file and prints it to stdout"`
+		Find struct {
+			Paths     []string `arg:"" help:"Paths to read." required:"" name:"paths" type:"path"`
+			Name      string   `short:"n" help:"Find files with this pattern."`
+			Inode     uint64   `short:"i" help:"Look for this inode."`
+			Recursive bool     `short:"r" help:"Enable deep scanning."`
+		} `cmd:"" help:"Find files in a disk device."`
 	} `cmd:"" help:"Read files directly from the disk device."`
 
 	Scan struct {
