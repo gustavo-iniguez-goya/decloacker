@@ -33,6 +33,8 @@ github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102184136-b354cca2574f h1:
 github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102184136-b354cca2574f/go.mod h1:FgpvcmugS/Ly74gG06Uq9vdUzYRpGpA7To9p2iWGbPQ=
 github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102185216-4cf896ae03cc h1:iAP0hJbVNvTQyMBjUeJ2rT5Sx+3MBVW1t82F4SCp+NQ=
 github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102185216-4cf896ae03cc/go.mod h1:FgpvcmugS/Ly74gG06Uq9vdUzYRpGpA7To9p2iWGbPQ=
+github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102185754-ff4072fb2bed h1:kcOIp3sZJfZmJK/Me21SB5WifOZuh/TqqO4ol5ji39g=
+github.com/gustavo-iniguez-goya/go-diskfs v0.0.0-20251102185754-ff4072fb2bed/go.mod h1:FgpvcmugS/Ly74gG06Uq9vdUzYRpGpA7To9p2iWGbPQ=
 github.com/gustavo-iniguez-goya/taskstats v0.0.0-20251031202614-c87b80fc2d53 h1:g5KlCWktJqrpO4IDWYwU6Zi9yPovWVhZx6G7ZEZQmow=
 github.com/gustavo-iniguez-goya/taskstats v0.0.0-20251031202614-c87b80fc2d53/go.mod h1:8YQTCHSJZw2KpsAhHNZXpc8MvjWjIsBSoap3vI09BsM=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
