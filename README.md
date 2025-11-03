@@ -69,6 +69,9 @@ Use `--with-builtin-paths` to scan only hidden files or content predefined paths
   scan hidden-procs
     Look for hidden processes.
 
+  scan hidden-sockets [<protos> ...] [flags]
+    Look for hidden sockets.
+
   scan system
     scan the system looking for hidden procs, lkms, files or content.
 ```
@@ -121,10 +124,8 @@ Pid        PPid       Inode    UID    GID    Host         Comm             Exe
 
 ### TODO
 
-- [ ] Add a cli option to scan the system with all the IOCs options.
 - [ ] Read options from a configuration file.
 - [ ] Dump logs in json and structured text.
-- [ ] Compare connections listed in /proc/net/* as well as the output of netstat/ss/lsof, with the connections found in kernel.
 - [ ] Display the differences when scanning with `scan hidden-content`.
 - [x] Display what processes opened the existing sockets.
       - 1/2 done: does not work for connections opened in containers.
