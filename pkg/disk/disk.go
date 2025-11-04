@@ -25,7 +25,7 @@ func parseEntries(path string, entries []os.FileInfo, inode uint64, search strin
 
 		pth := path + "/" + e.Name()
 		if inode > 0 {
-			ino := e.Sys().(syscall.Stat_t)
+			ino := e.Sys().(*syscall.Stat_t)
 			if ino.Ino == inode {
 				matchCb(utils.ToAscii(pth), e)
 				continue
