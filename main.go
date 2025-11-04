@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/alecthomas/kong"
@@ -122,16 +121,7 @@ func main() {
 		} else {
 			for _, file := range list {
 				dlog.Detection("%s\t%d\t%s\t%s\n", file.Mode(), file.Size(), file.ModTime().Format(time.RFC3339), file.Name())
-				sys, ok := file.Sys().(syscall.Stat_t)
-				if !ok {
-					continue
-				}
-				dlog.Detection("%-7s %d\t%-7s %d\t%-7s %d\n%-7s %v\n%-7s %v\n%-7s %v\n",
-					"Inode:", sys.Ino, "UID:", sys.Uid, "GID:", sys.Gid,
-					"Access:", time.Unix(sys.Atim.Sec, sys.Atim.Nsec),
-					"Modify:", time.Unix(sys.Mtim.Sec, sys.Mtim.Nsec),
-					"Change:", time.Unix(sys.Ctim.Sec, sys.Ctim.Nsec),
-				)
+				utils.PrintFileExtendedInfo(file.Sys())
 			}
 		}
 

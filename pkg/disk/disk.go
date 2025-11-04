@@ -9,12 +9,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gustavo-iniguez-goya/go-diskfs"
-	//"github.com/diskfs/go-diskfs/disk"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/log"
 	"github.com/gustavo-iniguez-goya/decloaker/pkg/utils"
+	"github.com/gustavo-iniguez-goya/go-diskfs"
 	"github.com/gustavo-iniguez-goya/go-diskfs/filesystem"
 	"github.com/gustavo-iniguez-goya/go-diskfs/filesystem/ext4"
+	"github.com/gustavo-iniguez-goya/go-diskfs/filesystem/xfs"
 )
 
 func parseEntries(path string, entries []os.FileInfo, inode uint64, search string, matchCb func(path string, e os.FileInfo)) {
@@ -125,6 +125,7 @@ func ReadDir(dev string, partition int, path string, openMode diskfs.OpenModeOpt
 	if !recursive {
 		entries, err := fs.ReadDir(path)
 		if err != nil {
+			log.Error("%s\n", err)
 			return list
 		}
 		for _, e := range entries {
@@ -302,20 +303,41 @@ func Stat(dev string, partition int, paths []string, openMode diskfs.OpenModeOpt
 		return nil, fmt.Errorf("unable to read disk partition %s, %d, %s", dev, partition, err)
 	}
 
-	ext4fs, ok := fs.(*ext4.FileSystem)
-	if !ok {
-		return nil, fmt.Errorf("%s:%d is not a ext4 filesystem", dev, partition)
-	}
-	defer ext4fs.Close()
-
 	var list []os.FileInfo
-	for _, p := range paths {
-		stat, err := ext4fs.Stat(p)
-		if err != nil {
-			log.Error("ext4.Stat() %s\n", err)
-			continue
+
+	switch fs.(type) {
+	case *ext4.FileSystem:
+		ext4fs, ok := fs.(*ext4.FileSystem)
+		if !ok {
+			return nil, fmt.Errorf("%s:%d is not a ext4 filesystem", dev, partition)
 		}
-		list = append(list, stat)
+		defer ext4fs.Close()
+
+		for _, p := range paths {
+			stat, err := ext4fs.Stat(p)
+			if err != nil {
+				log.Error("ext4.Stat() %s\n", err)
+				continue
+			}
+			list = append(list, stat)
+		}
+	case *xfs.FileSystem:
+		xfs, ok := fs.(*xfs.FileSystem)
+		if !ok {
+			return nil, fmt.Errorf("%s:%d is not a xfs filesystem", dev, partition)
+		}
+		defer xfs.Close()
+
+		for _, p := range paths {
+			stat, err := xfs.Stat(p)
+			if err != nil {
+				log.Error("xfs.Stat() %s\n", err)
+				continue
+			}
+			list = append(list, stat)
+		}
+	default:
+		return list, fmt.Errorf("%v not implemented yet", fs.Type())
 	}
 
 	return list, nil
